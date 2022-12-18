@@ -1,8 +1,3 @@
-LIBRARIES = \
-	vector \
-	map \
-	linkedlist \
-
 # ----------- FOLDERS -----------
 
 BINARIES_DIR = src/
@@ -21,6 +16,7 @@ CC = gcc
 
 # ----------- VARIABLES -----------
 
+LIBRARIES = $(patsubst $(LIBRARIES_DIR)%,%,$(wildcard $(LIBRARIES_DIR)*))
 ALL_OBJECTS = $(addprefix $(LIBRARIES_BUILD), $(addsuffix .o, $(LIBRARIES)))
 ALL_INCLUDES = $(addprefix -I$(LIBRARIES_DIR), $(LIBRARIES))
 
