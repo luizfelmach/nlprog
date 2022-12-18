@@ -1,14 +1,13 @@
-LIBRARYS = \
-	test \
+LIBRARIES = \
 	vector \
-	article
 
 # ----------- FOLDERS -----------
 
-BINARYS_DIR = src
-LIBRARYS_DIR = libs
+BINARIES_DIR = src
+LIBRARIES_DIR = libs
+LIBRARIES_BUILD = build
 
-# ----------- OUTPUTS -----------
+# ----------- BINARIES -----------
 
 INDEXER = indexer
 NLPROG = nlprog
@@ -22,11 +21,11 @@ all: \
 	$(EXPERIMENTAL)
 	@echo "finished"
 
-$(INDEXER): $(BINARYS_DIR)/indexer.c
+$(INDEXER): $(BINARIES_DIR)/indexer.c
 
-$(NLPROG): $(BINARYS_DIR)/nlprog.c
+$(NLPROG): $(BINARIES_DIR)/nlprog.c
 
-$(EXPERIMENTAL): $(BINARYS_DIR)/experimental.c
+$(EXPERIMENTAL): $(BINARIES_DIR)/experimental.c
 
 clean:
 	rm -rf \
