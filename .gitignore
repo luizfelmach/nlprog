@@ -1,2 +1,6 @@
 dataset/
+build/
 .vscode/
+experimental
+indexer
+nlprog
