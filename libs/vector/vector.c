@@ -5,7 +5,7 @@
 
 struct _vector {
     void **data;
-    size_t last, capacity, size;
+    size_t last, capacity, size; // ultimo add, alocados, sizeof do tipo
 };
 
 Vector vector_new(size_t size) {
