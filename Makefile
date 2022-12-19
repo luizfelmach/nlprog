@@ -3,6 +3,8 @@
 BINARIES_DIR = src/
 LIBRARIES_DIR = libs/
 LIBRARIES_BUILD = build/
+TESTS_DIR = tests/
+TESTS_BUILD = bin/
 
 # ----------- BINARIES -----------
 
@@ -17,6 +19,7 @@ CC = gcc
 # ----------- VARIABLES -----------
 
 LIBRARIES = $(patsubst $(LIBRARIES_DIR)%,%,$(wildcard $(LIBRARIES_DIR)*))
+TESTS = $(wildcard tests/*.c)
 ALL_OBJECTS = $(addprefix $(LIBRARIES_BUILD), $(addsuffix .o, $(LIBRARIES)))
 ALL_INCLUDES = $(addprefix -I$(LIBRARIES_DIR), $(LIBRARIES))
 
@@ -48,9 +51,13 @@ $(EXPERIMENTAL): $(BINARIES_DIR)experimental.c $(ALL_OBJECTS)
 	@echo -e "linking with \033[1;35mexperimental\033[0m"
 	@$(CC) -o $(EXPERIMENTAL) $(ALL_INCLUDES) $(BINARIES_DIR)experimental.c $(ALL_OBJECTS)
 
+# ----------- Generate tests -----------
+$(TESTS_DIR)%: $(TESTS_DIR)%.c $(ALL_OBJECTS)
+	$(eval BASENAME = $(basename $(notdir $@)))
+	$(eval OUT = $(addprefix $(TESTS_BUILD), $(BASENAME)))
+	@mkdir -p $(TESTS_BUILD)
+	$(CC) -o $(OUT) $@.c $(ALL_OBJECTS) $(ALL_INCLUDES)
+
 clean:
-	rm -rf \
-		$(INDEXER) \
-		$(NLPROG) \
-		$(EXPERIMENTAL)
-	rm -rf $(LIBRARIES_BUILD)
+	rm -rf $(INDEXER) $(NLPROG) $(EXPERIMENTAL)
+	rm -rf $(LIBRARIES_BUILD) $(TESTS_BUILD)

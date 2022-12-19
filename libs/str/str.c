@@ -67,7 +67,7 @@ void *str_at(void *data, int n) {
 
 void str_insert(void *data, void *new_data, int n) {
     Str str = (Str)data;
-    str[n] = *new_data;
+    //str[n] = *new_data;
 }
 
 
