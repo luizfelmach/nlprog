@@ -31,7 +31,7 @@ $(LIBRARIES_BUILD)%.o: $(LIBRARIES_DIR)*/%.c $(LIBRARIES_DIR)*/%.h
 	$(eval OUT = $(addsuffix .o, $(addprefix $(LIBRARIES_BUILD), $(BASENAME))))
 	@echo -e "building \033[1;32m$(BASENAME)\033[0m"
 	@mkdir -p $(LIBRARIES_BUILD)
-	@$(CC) -c -o $(OUT) $<
+	@$(CC) -c -o $(OUT) $(ALL_INCLUDES) $<
 
 # ----------- Generate indexer -----------
 $(INDEXER): $(BINARIES_DIR)indexer.c $(ALL_OBJECTS)
