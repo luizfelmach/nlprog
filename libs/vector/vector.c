@@ -1,42 +1,52 @@
-#include "vector.h"
-
 #include <stdlib.h>
 #include <string.h>
-
-#include "self.h"
+#include <vector.h>
 
 struct _vector {
-    void *data;
-    Self self;
-    size_t last, capacity;
+    void **data;
+    size_t last, capacity, size;  // ultimo add, alocados, sizeof do tipo
 };
 
-Vector vector_new(Self self) {
+Vector vector_new(size_t size) {
     Vector vector = (Vector)calloc(1, sizeof(struct _vector));
+    vector->size = size;
     vector->capacity = 100;
-    vector->self = self;
-    vector->data = vector->self->alloc(vector->capacity);
+    vector->data = (void **)calloc(vector->capacity, sizeof(void *));
     return vector;
 }
 
 void *vector_at(Vector vector, size_t index) {
-    if (vector->last <= index) {
+    if (vector->last < index) {
         return NULL;
     }
-    return vector->self->at(vector->data, index);
+    return vector->data[index];
 }
 
 void vector_push(Vector vector, void *data) {
     if (vector->last == vector->capacity) {
         vector->capacity *= 2;
-        vector->data = vector->self->realloc(vector->data, vector->capacity);
+        vector->data = realloc(vector->data, vector->capacity * vector->size);
     }
-    vector->self->insert(vector->data, data, vector->last);
+    vector->data[vector->last] = calloc(1, vector->size);
+    memcpy(vector->data[vector->last], data, vector->size);
+    vector->last += 1;
+}
+
+void vector_npush(Vector vector, void *data, size_t n) {
+    if (vector->last == vector->capacity) {
+        vector->capacity *= 2;
+        vector->data = realloc(vector->data, vector->capacity * vector->size);
+    }
+    vector->data[vector->last] = calloc(n, vector->size);
+    memcpy(vector->data[vector->last], data, vector->size * n);
     vector->last += 1;
 }
 
 void vector_destroy(Vector vector) {
-    vector->self->free(vector->data, vector->last);
-    self_destroy(vector->self);
+    int i;
+    for (i = 0; i < vector->last; i++) {
+        free(vector->data[i]);
+    }
+    free(vector->data);
     free(vector);
 }
