@@ -1,5 +1,4 @@
-#include "self.h"
-
+#include <self.h>
 #include <stdio.h>
 #include <stdlib.h>
 

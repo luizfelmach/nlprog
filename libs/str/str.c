@@ -51,7 +51,11 @@ void *str_realloc(void *data, int n) {
     return realloc(data, n * sizeof(Str));
 }
 
-void str_free(void *data) {
+void str_free(void *data, int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        str_destroy(((Str *)data)[i]);
+    }
     free(data);
 }
 

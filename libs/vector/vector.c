@@ -36,7 +36,7 @@ void vector_push(Vector vector, void *data) {
 }
 
 void vector_destroy(Vector vector) {
-    vector->self->free(vector->data);
+    vector->self->free(vector->data, vector->last);
     self_destroy(vector->self);
     free(vector);
 }
