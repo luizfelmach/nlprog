@@ -18,7 +18,6 @@ Vector vector_new(size_t size) {
 
 void *vector_at(Vector vector, size_t index) {
     if(vector->last < index){
-        printf("\nA posicao %d eh invalida para o vector de tamanho %d\n", index, vector->last );
         return NULL;
     }
     return vector->data[index];
