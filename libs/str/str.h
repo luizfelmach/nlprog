@@ -5,7 +5,7 @@
 
 typedef struct _str *Str;
 
-Str str_new();
+Str str_new(char *v);
 void str_set(Str s, char *v);
 char *str_ptr(Str s);
 int str_size(Str s);

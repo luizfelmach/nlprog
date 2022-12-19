@@ -20,7 +20,7 @@ Vector vector_new(Self self) {
 }
 
 void *vector_at(Vector vector, size_t index) {
-    if (vector->last < index) {
+    if (vector->last <= index) {
         return NULL;
     }
     return vector->self->at(vector->data, index);
@@ -36,7 +36,7 @@ void vector_push(Vector vector, void *data) {
 }
 
 void vector_destroy(Vector vector) {
-    vector->self->free(vector->data, vector->last);
+    vector->self->free(vector->data);
     self_destroy(vector->self);
     free(vector);
 }

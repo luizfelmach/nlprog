@@ -10,8 +10,12 @@ struct _str {
     int last, capacity;
 };
 
-Str str_new() {
+Str str_new(char *v) {
     Str s = (Str)calloc(1, sizeof(struct _str));
+    s->last = strlen(v) + 1;
+    s->capacity = strlen(v) + 1;
+    s->data = (char *)malloc(s->last * sizeof(char));
+    strcpy(s->data, v);
     return s;
 }
 
@@ -20,7 +24,9 @@ void str_set(Str s, char *v) {
         return;
     }
     free(s->data);
-    s->data = (char *)malloc((strlen(v) + 1) * sizeof(char));
+    s->last = strlen(v) + 1;
+    s->capacity = strlen(v) + 1;
+    s->data = (char *)malloc(s->last * sizeof(char));
     strcpy(s->data, v);
 }
 
@@ -29,7 +35,7 @@ char *str_ptr(Str s) {
 }
 
 int str_size(Str s) {
-    return strlen(s->data);
+    return s->last - 1;
 }
 
 void str_destroy(Str s) {
@@ -37,41 +43,35 @@ void str_destroy(Str s) {
     free(s);
 }
 
-void *str_constructor() {
-    return (void *)str_new();
-}
-
-void str_destructor(void *data) {
-    str_destroy((Str)data);
-}
-
 void *str_alloc(int n) {
-    return (Str)calloc(n, sizeof(struct _str));
+    return calloc(n, sizeof(Str));
 }
 
-void str_free(void *data, int n) {
-    int i;
-    for (i = 0; i < n; i++) {
-        str_destroy(((Str)data) + i);
-    }
+void *str_realloc(void *data, int n) {
+    return realloc(data, n * sizeof(Str));
+}
+
+void str_free(void *data) {
     free(data);
 }
 
 void *str_at(void *data, int n) {
-    return ((Str)data) + n;
+    return ((Str *)data)[n];
 }
 
 void str_insert(void *data, void *new_data, int n) {
-    Str str = (Str)data;
-    // str[n] = *new_data;
+    Str *s = (Str *)data;
+    s[n] = (Str)new_data;
 }
 
 Self str() {
     Self self = self_new();
-    self->constructor = str_constructor;
-    self->destructor = str_destructor;
+
     self->alloc = str_alloc;
+    self->realloc = str_realloc;
     self->free = str_free;
     self->at = str_at;
+    self->insert = str_insert;
+
     return self;
 }
