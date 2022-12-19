@@ -1,8 +1,9 @@
 #include "vector.h"
-#include "self.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "self.h"
 
 struct _vector {
     void *data;
@@ -19,7 +20,7 @@ Vector vector_new(Self self) {
 }
 
 void *vector_at(Vector vector, size_t index) {
-    if(vector->last < index){
+    if (vector->last < index) {
         return NULL;
     }
     return vector->self->at(vector->data, index);

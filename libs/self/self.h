@@ -3,7 +3,7 @@
 
 struct _self {
     void *(*constructor)();
-    void (*destructor)(void * data);
+    void (*destructor)(void *data);
     void *(*alloc)(int n);
     void (*free)(void *data, int n);
     void *(*realloc)(void *data, int n);

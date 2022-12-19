@@ -1,9 +1,9 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include "self.h"
-
 #include <stdlib.h>
+
+#include "self.h"
 
 typedef struct _vector *Vector;
 

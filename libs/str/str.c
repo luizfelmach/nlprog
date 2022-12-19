@@ -1,8 +1,9 @@
 #include "str.h"
-#include "self.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "self.h"
 
 struct _str {
     char *data;
@@ -36,11 +37,6 @@ void str_destroy(Str s) {
     free(s);
 }
 
-
-
-
-
-
 void *str_constructor() {
     return (void *)str_new();
 }
@@ -67,13 +63,12 @@ void *str_at(void *data, int n) {
 
 void str_insert(void *data, void *new_data, int n) {
     Str str = (Str)data;
-    //str[n] = *new_data;
+    // str[n] = *new_data;
 }
-
 
 Self str() {
     Self self = self_new();
-    self->constructor = str_constructor; 
+    self->constructor = str_constructor;
     self->destructor = str_destructor;
     self->alloc = str_alloc;
     self->free = str_free;
