@@ -19,7 +19,7 @@ CC = gcc
 # ----------- VARIABLES -----------
 
 LIBRARIES = $(patsubst $(LIBRARIES_DIR)%,%,$(wildcard $(LIBRARIES_DIR)*))
-TESTS = $(wildcard tests/*.c)
+TESTS = $(addprefix $(TESTS_BUILD), $(basename $(notdir $(wildcard $(TESTS_DIR)*.c))))
 ALL_OBJECTS = $(addprefix $(LIBRARIES_BUILD), $(addsuffix .o, $(LIBRARIES)))
 ALL_INCLUDES = $(addprefix -I$(LIBRARIES_DIR), $(LIBRARIES))
 
@@ -27,6 +27,8 @@ all: \
 	$(INDEXER) \
 	$(NLPROG) \
 	$(EXPERIMENTAL)
+
+test: $(TESTS)
 
 # ----------- Generate all .o -----------
 $(LIBRARIES_BUILD)%.o: $(LIBRARIES_DIR)*/%.c $(LIBRARIES_DIR)*/%.h
@@ -52,11 +54,12 @@ $(EXPERIMENTAL): $(BINARIES_DIR)experimental.c $(ALL_OBJECTS)
 	@$(CC) -o $(EXPERIMENTAL) $(ALL_INCLUDES) $(BINARIES_DIR)experimental.c $(ALL_OBJECTS)
 
 # ----------- Generate tests -----------
-$(TESTS_DIR)%: $(TESTS_DIR)%.c $(ALL_OBJECTS)
+$(TESTS_BUILD)%: $(TESTS_DIR)%.c $(ALL_OBJECTS)
 	$(eval BASENAME = $(basename $(notdir $@)))
 	$(eval OUT = $(addprefix $(TESTS_BUILD), $(BASENAME)))
+	@echo -e "generating test \033[1;33m$(BASENAME)\033[0m"
 	@mkdir -p $(TESTS_BUILD)
-	$(CC) -o $(OUT) $@.c $(ALL_OBJECTS) $(ALL_INCLUDES)
+	@$(CC) -o $(OUT) $(TESTS_DIR)$(BASENAME).c $(ALL_OBJECTS) $(ALL_INCLUDES)
 
 clean:
 	rm -rf $(INDEXER) $(NLPROG) $(EXPERIMENTAL)
