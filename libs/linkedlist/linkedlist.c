@@ -21,6 +21,7 @@ void linkedlist_add(Linkedlist linkedlist, void *data) {
         linkedlist->node = (Node *)calloc(1, sizeof(Node));
         linkedlist->node->data = data;
         linkedlist->node->next = NULL;
+        return;
     }
     Node *node = (Node *)calloc(1, sizeof(Node));
     node->data = data;
