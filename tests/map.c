@@ -12,12 +12,14 @@ typedef struct Language *Language_pt;
 
 Language_pt language_new(char *key, int count);
 int language_cmp(const void *data1, const void *data2);
+void language_show(void *data);
 
 int main() {
     Map map = map_new();
 
     char *words[10] = {
-        "c++", "c++", "c++", "c++", "c++", "c", "rust", "rust", "rust", "rust",
+        "c++", "java", "js",      "python",   "c#",
+        "c",   "rust", "haskell", "assembly", "rust",
     };
 
     Language_pt lang;
@@ -49,8 +51,11 @@ int main() {
         printf("%s appeared %d times\n", javascript->key, javascript->count);
     }
 
-    map_destroy(map, free);
+    printf("\nAll data:\n");
 
+    map_foreach(map, language_show);
+
+    map_destroy(map, free);
     return 0;
 }
 
@@ -63,4 +68,9 @@ Language_pt language_new(char *key, int count) {
 
 int language_cmp(const void *data1, const void *data2) {
     return strcmp(((Language_pt)data1)->key, (char *)data2);
+}
+
+void language_show(void *data) {
+    Language_pt lang = (Language_pt)data;
+    printf("%s appeared %d times\n", lang->key, lang->count);
 }

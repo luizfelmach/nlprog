@@ -47,6 +47,15 @@ void map_insert(Map map, char *key, void *data) {
     linkedlist_add(map->data[index], data);
 }
 
+void map_foreach(Map map, data_fn fn) {
+    int i;
+    for (i = 0; i < MAX; i++) {
+        if (map->data[i] != NULL) {
+            linkedlist_foreach(map->data[i], fn);
+        }
+    }
+}
+
 void map_destroy(Map map, data_destroy destroy) {
     int i;
     for (i = 0; i < MAX; i++) {
