@@ -13,6 +13,7 @@ typedef struct Person *Person_pt;
 int person_cmp(const void *p1, const void *p2);
 Person_pt person_new(char *name, int id);
 void person_show(Person_pt p);
+void person_for(void *data);
 
 int main() {
     Linkedlist ll = linkedlist_new();
@@ -31,6 +32,9 @@ int main() {
 
     person_show(p1);
     person_show(p2);
+
+    printf("\nAll data:\n\n");
+    linkedlist_foreach(ll, person_for);
 
     linkedlist_destroy(ll, free);
     return 0;
@@ -53,4 +57,8 @@ void person_show(Person_pt p) {
         return;
     }
     printf("%d: %s\n", p->id, p->name);
+}
+
+void person_for(void *data) {
+    person_show((Person_pt)data);
 }

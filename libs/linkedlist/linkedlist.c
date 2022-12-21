@@ -38,6 +38,14 @@ void *linkedlist_search(Linkedlist linkedlist, void *data, data_cmp cmp) {
     }
 }
 
+void linkedlist_foreach(Linkedlist linkedlist, data_fn fn) {
+    Node *node = linkedlist->node;
+    while (node != NULL) {
+        fn(node->data);
+        node = node->next;
+    }
+}
+
 void linkedlist_destroy(Linkedlist linkedlist, data_destroy destroy) {
     Node *node = linkedlist->node;
     Node *aux = NULL;
