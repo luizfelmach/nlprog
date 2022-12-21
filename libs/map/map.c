@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int MAX = 100;
+const static int MAX = 12289;  // Good prime number for hash tables
 
 struct _map {
     Linkedlist *data;
@@ -18,7 +18,13 @@ Map map_new() {
 }
 
 int fn_hash(char *key) {
-    return 0;
+    int sum = 0;
+    int i = 0;
+    while (key[i] != '\0') {
+        sum += (int)key[i];
+        i += 1;
+    }
+    return sum % MAX;
 }
 
 void *map_get(Map map, char *key, data_cmp cmp) {
