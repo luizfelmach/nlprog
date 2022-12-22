@@ -36,6 +36,7 @@ void *linkedlist_search(Linkedlist linkedlist, void *data, data_cmp cmp) {
         }
         node = node->next;
     }
+    return NULL;
 }
 
 void linkedlist_foreach(Linkedlist linkedlist, data_fn fn, void *ctx) {

@@ -3,62 +3,38 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Person {
-    char name[20];
-    int id;
-};
+char *names[5] = {"John", "Jullie", "Louis", "Peter", "Max"};
 
-typedef struct Person *Person_pt;
-
-int person_cmp(const void *p1, const void *p2);
-Person_pt person_new(char *name, int id);
-void person_show(Person_pt p);
-void person_for(void *data, void *ctx);
+void ll_show(void *data, void *ctx);
+int ll_cmp(const void *p1, const void *p2);
 
 int main() {
     Linkedlist ll = linkedlist_new();
 
-    char *names[5] = {"John", "Jullie", "Louis", "Peter", "Max"};
-
-    Person_pt p;
     int i;
-    for (i = 0; i < 5; i++) {
-        p = person_new(names[i], i);
-        linkedlist_add(ll, p);
+    for (i = 0; i < 7; i++) {
+        linkedlist_add(ll, strdup(names[i % 5]));
     }
 
-    Person_pt p1 = (Person_pt)linkedlist_search(ll, "Doe", person_cmp);
-    Person_pt p2 = (Person_pt)linkedlist_search(ll, "Louis", person_cmp);
+    linkedlist_foreach(ll, ll_show, NULL);
+    printf("\n");
 
-    person_show(p1);
-    person_show(p2);
+    char *exists = linkedlist_search(ll, "Peter", ll_cmp);
 
-    printf("\nAll data:\n\n");
-    linkedlist_foreach(ll, person_for, NULL);
+    if (!exists) {
+        printf("Name does not exists\n");
+    } else {
+        printf("Name '%s' exists\n", exists);
+    }
 
     linkedlist_destroy(ll, free);
     return 0;
 }
 
-int person_cmp(const void *p1, const void *p2) {
-    return strcmp(((Person_pt)p1)->name, (char *)p2);
+int ll_cmp(const void *p1, const void *p2) {
+    return strcmp((char *)p1, (char *)p2);
 }
 
-Person_pt person_new(char *name, int id) {
-    Person_pt p = (Person_pt)calloc(1, sizeof(struct Person));
-    p->id = id;
-    strcpy(p->name, name);
-    return p;
-}
-
-void person_show(Person_pt p) {
-    if (p == NULL) {
-        printf("Person does not exists\n");
-        return;
-    }
-    printf("%d: %s\n", p->id, p->name);
-}
-
-void person_for(void *data, void *ctx) {
-    person_show((Person_pt)data);
+void ll_show(void *data, void *ctx) {
+    printf("%s\n", (char *)data);
 }
