@@ -1,4 +1,5 @@
 #include <linkedlist.h>
+#include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +14,7 @@ int main() {
 
     int i;
     for (i = 0; i < 7; i++) {
-        linkedlist_add(ll, strdup(names[i % 5]));
+        linkedlist_add(ll, new_string(names[i % 5]));
     }
 
     linkedlist_foreach(ll, ll_show, NULL);
