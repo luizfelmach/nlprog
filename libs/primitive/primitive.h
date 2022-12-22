@@ -6,6 +6,6 @@ int *new_int(int a);
 double *new_double(double a);
 float *new_float(float a);
 char *new_char(char *c);
-void nothing(void *a);
+void do_nothing(void *a);
 
 #endif  // PRIMITIVE_H

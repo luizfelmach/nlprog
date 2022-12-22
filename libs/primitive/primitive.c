@@ -30,5 +30,5 @@ char *new_char(char *c) {
     return b;
 }
 
-void nothing(void *a) {
+void do_nothing(void *a) {
 }
