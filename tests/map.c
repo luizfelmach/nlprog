@@ -19,12 +19,13 @@ int main() {
         if (!p) {
             int *value = malloc(sizeof(int));
             *value = 1;
-            map_insert(map, words[i], value);
+            map_insert(map, strdup(words[i]), value);
         } else {
             int *value = (int *)pair_second(p);
             *value += 1;
         }
     }
+
     Pair p = map_get(map, "python");
 
     if (!p) {
@@ -35,6 +36,6 @@ int main() {
         printf("%s - %d\n", key, *value);
     }
 
-    // map_destroy(map, free);
+    map_destroy(map, free, free);
     return 0;
 }

@@ -38,10 +38,10 @@ void *linkedlist_search(Linkedlist linkedlist, void *data, data_cmp cmp) {
     }
 }
 
-void linkedlist_foreach(Linkedlist linkedlist, data_fn fn) {
+void linkedlist_foreach(Linkedlist linkedlist, data_fn fn, void *ctx) {
     Node *node = linkedlist->node;
     while (node != NULL) {
-        fn(node->data);
+        fn(node->data, ctx);
         node = node->next;
     }
 }

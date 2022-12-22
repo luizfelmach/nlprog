@@ -4,7 +4,7 @@
 #include <pair.h>
 
 typedef void (*data_destroy)(void *data);
-typedef void (*data_fn)(void *data);
+typedef void (*data_fn)(void *data, void *ctx);
 
 typedef struct _map *Map;
 

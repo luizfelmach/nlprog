@@ -60,17 +60,35 @@ void map_foreach(Map map, data_fn fn) {
     int i;
     for (i = 0; i < MAX; i++) {
         if (map->data[i] != NULL) {
-            linkedlist_foreach(map->data[i], fn);
+            linkedlist_foreach(map->data[i], fn, NULL);
         }
     }
 }
 
+typedef struct {
+    void (*destroy_key)(void *data);
+    void (*destroy_value)(void *data);
+} Destroy_Fn;
+
+void map_destroy_pair(void *data, void *ctx) {
+    Destroy_Fn *destroy_fn = (Destroy_Fn *)ctx;
+    Pair p = (Pair)data;
+    pair_destroy(p, destroy_fn->destroy_key, destroy_fn->destroy_value);
+}
+
+void nothing(void *data) {
+}
+
 void map_destroy(Map map, data_destroy destroy_key,
                  data_destroy destroy_value) {
+    Destroy_Fn destroy_fn = {.destroy_key = destroy_key,
+                             .destroy_value = destroy_value};
+
     int i;
     for (i = 0; i < MAX; i++) {
         if (map->data[i] != NULL) {
-            // linkedlist_destroy(map->data[i], destroy);
+            linkedlist_foreach(map->data[i], map_destroy_pair, &destroy_fn);
+            linkedlist_destroy(map->data[i], nothing);
         }
     }
     free(map->data);
