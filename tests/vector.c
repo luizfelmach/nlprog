@@ -1,3 +1,4 @@
+#include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector.h>
@@ -9,9 +10,7 @@ int main() {
 
     int i;
     for (i = 0; i < 200; i++) {
-        int *value = (int *)malloc(sizeof(int));
-        *value = i;
-        vector_push(vec, value);
+        vector_push(vec, new_int(i));
     }
 
     vector_foreach(vec, vec_show, NULL);
