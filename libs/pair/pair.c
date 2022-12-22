@@ -23,4 +23,7 @@ void *pair_second(Pair pair) {
 
 void pair_destroy(Pair pair, data_destroy destroy_first,
                   data_destroy destroy_second) {
+    destroy_first(pair->first);
+    destroy_second(pair->second);
+    free(pair);
 }
