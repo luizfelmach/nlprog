@@ -1,18 +1,8 @@
 #include <map.h>
+#include <pair.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-struct Language {
-    char key[20];
-    int count;
-};
-
-typedef struct Language *Language_pt;
-
-Language_pt language_new(char *key, int count);
-int language_cmp(const void *data1, const void *data2);
-void language_show(void *data);
 
 int main() {
     Map map = map_new();
@@ -22,55 +12,29 @@ int main() {
         "c",   "rust", "haskell", "assembly", "rust",
     };
 
-    Language_pt lang;
     int i;
     for (i = 0; i < 10; i++) {
-        lang = (Language_pt)map_get(map, words[i], language_cmp);
+        Pair p = map_get(map, words[i]);
 
-        if (!lang) {
-            Language_pt new_lang = language_new(words[i], 1);
-            map_insert(map, words[i], new_lang);
+        if (!p) {
+            int *value = malloc(sizeof(int));
+            *value = 1;
+            map_insert(map, words[i], value);
         } else {
-            lang->count += 1;
+            int *value = (int *)pair_second(p);
+            *value += 1;
         }
     }
+    Pair p = map_get(map, "python");
 
-    Language_pt cpp = map_get(map, "c++", language_cmp);
-
-    if (!cpp) {
+    if (!p) {
         printf("Language does not exists\n");
     } else {
-        printf("%s appeared %d times\n", cpp->key, cpp->count);
+        char *key = (char *)pair_first(p);
+        int *value = (int *)pair_second(p);
+        printf("%s - %d\n", key, *value);
     }
 
-    Language_pt javascript = map_get(map, "javascript", language_cmp);
-
-    if (!javascript) {
-        printf("Language does not exists\n");
-    } else {
-        printf("%s appeared %d times\n", javascript->key, javascript->count);
-    }
-
-    printf("\nAll data:\n");
-
-    map_foreach(map, language_show);
-
-    map_destroy(map, free);
+    // map_destroy(map, free);
     return 0;
-}
-
-Language_pt language_new(char *key, int count) {
-    Language_pt lang = (Language_pt)calloc(1, sizeof(struct Language));
-    lang->count = count;
-    strcpy(lang->key, key);
-    return lang;
-}
-
-int language_cmp(const void *data1, const void *data2) {
-    return strcmp(((Language_pt)data1)->key, (char *)data2);
-}
-
-void language_show(void *data) {
-    Language_pt lang = (Language_pt)data;
-    printf("%s appeared %d times\n", lang->key, lang->count);
 }

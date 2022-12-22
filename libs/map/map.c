@@ -2,6 +2,7 @@
 #include <map.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 const static int MAX = 12289;  // Good prime number for hash tables
 
@@ -27,14 +28,20 @@ int fn_hash(char *key) {
     return sum % MAX;
 }
 
-void *map_get(Map map, char *key, data_cmp cmp) {
+int map_data_cmp(const void *d1, const void *d2) {
+    Pair p = (Pair)d1;
+    char *key_inside = pair_first(p);
+    return strcmp(key_inside, (char *)d2);
+}
+
+Pair map_get(Map map, char *key) {
     int index = fn_hash(key);
 
     if (map->data[index] == NULL) {
         return NULL;
     }
 
-    return linkedlist_search(map->data[index], key, cmp);
+    return (Pair)linkedlist_search(map->data[index], key, map_data_cmp);
 }
 
 void map_insert(Map map, char *key, void *data) {
@@ -44,7 +51,9 @@ void map_insert(Map map, char *key, void *data) {
         map->data[index] = linkedlist_new();
     }
 
-    linkedlist_add(map->data[index], data);
+    Pair p = pair_new(key, data);
+
+    linkedlist_add(map->data[index], p);
 }
 
 void map_foreach(Map map, data_fn fn) {
@@ -56,11 +65,12 @@ void map_foreach(Map map, data_fn fn) {
     }
 }
 
-void map_destroy(Map map, data_destroy destroy) {
+void map_destroy(Map map, data_destroy destroy_key,
+                 data_destroy destroy_value) {
     int i;
     for (i = 0; i < MAX; i++) {
         if (map->data[i] != NULL) {
-            linkedlist_destroy(map->data[i], destroy);
+            // linkedlist_destroy(map->data[i], destroy);
         }
     }
     free(map->data);
