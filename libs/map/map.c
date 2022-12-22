@@ -56,11 +56,11 @@ void map_insert(Map map, char *key, void *data) {
     linkedlist_add(map->data[index], p);
 }
 
-void map_foreach(Map map, data_fn fn) {
+void map_foreach(Map map, data_fn fn, void *ctx) {
     int i;
     for (i = 0; i < MAX; i++) {
         if (map->data[i] != NULL) {
-            linkedlist_foreach(map->data[i], fn, NULL);
+            linkedlist_foreach(map->data[i], fn, ctx);
         }
     }
 }
