@@ -4,19 +4,18 @@
 
 struct _vector {
     void **data;
-    size_t last, capacity, size;  // ultimo add, alocados, sizeof do tipo
+    int last, capacity;
 };
 
-Vector vector_new(size_t size) {
+Vector vector_new() {
     Vector vector = (Vector)calloc(1, sizeof(struct _vector));
-    vector->size = size;
     vector->capacity = 100;
     vector->data = (void **)calloc(vector->capacity, sizeof(void *));
     return vector;
 }
 
-void *vector_at(Vector vector, size_t index) {
-    if (vector->last < index) {
+void *vector_at(Vector vector, int index) {
+    if (vector->last <= index) {
         return NULL;
     }
     return vector->data[index];
@@ -25,27 +24,23 @@ void *vector_at(Vector vector, size_t index) {
 void vector_push(Vector vector, void *data) {
     if (vector->last == vector->capacity) {
         vector->capacity *= 2;
-        vector->data = realloc(vector->data, vector->capacity * vector->size);
+        vector->data = realloc(vector->data, vector->capacity * sizeof(void *));
     }
-    vector->data[vector->last] = calloc(1, vector->size);
-    memcpy(vector->data[vector->last], data, vector->size);
+    vector->data[vector->last] = data;
     vector->last += 1;
 }
 
-void vector_npush(Vector vector, void *data, size_t n) {
-    if (vector->last == vector->capacity) {
-        vector->capacity *= 2;
-        vector->data = realloc(vector->data, vector->capacity * vector->size);
-    }
-    vector->data[vector->last] = calloc(n, vector->size);
-    memcpy(vector->data[vector->last], data, vector->size * n);
-    vector->last += 1;
-}
-
-void vector_destroy(Vector vector) {
+void vector_foreach(Vector vector, data_fn fn, void *ctx) {
     int i;
     for (i = 0; i < vector->last; i++) {
-        free(vector->data[i]);
+        fn(vector->data[i], ctx);
+    }
+}
+
+void vector_destroy(Vector vector, data_destroy destroy) {
+    int i;
+    for (i = 0; i < vector->last; i++) {
+        destroy(vector->data[i]);
     }
     free(vector->data);
     free(vector);
