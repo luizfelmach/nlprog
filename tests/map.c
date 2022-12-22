@@ -1,5 +1,6 @@
 #include <map.h>
 #include <pair.h>
+#include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,9 +20,7 @@ int main() {
         Pair p = map_get(map, words[i]);
 
         if (!p) {
-            int *value = malloc(sizeof(int));
-            *value = 1;
-            map_insert(map, strdup(words[i]), value);
+            map_insert(map, new_string(words[i]), new_int(1));
         } else {
             int *value = (int *)pair_second(p);
             *value += 1;
