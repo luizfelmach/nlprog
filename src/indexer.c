@@ -1,100 +1,85 @@
 #include <libgen.h>
 #include <map.h>
+#include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector.h>
 
 char path[128];
 
-typedef struct {
-    char filename[128];
-    char class[32];
-} train_item;
-
-int train_item_get(FILE *file, train_item *item);
+char *words[10] = {
+    "c++", "java", "js",      "python",   "c#",
+    "c",   "rust", "haskell", "assembly", "rust",
+};
 
 typedef struct {
-    char name[1024];
-    int count;
-} Word;
+    int doc, freq;
+    double tf_idf;
+} WIT;
 
-typedef Word *Word_pt;
+WIT *wit_new(int doc, int freq, double tf_idf);
 
-void word_add(Map map, char *word);
-int word_cmp(const void *data1, const void *data2);
-void word_show(void *data);
+void inverted_index_show(void *data, void *ctx);
+void inverted_index_value_free(void *data) {
+    Vector vec = (Vector)data;
+    vector_destroy(vec, free);
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
         printf("error: missing parameters.");
         exit(1);
     }
-
     strcpy(path, argv[1]);
     dirname(path);
-
     printf("current folder context: %s\n", path);
-
     FILE *train = fopen(argv[1], "r");
-
     if (!train) {
         printf("error: can not open file.");
         exit(1);
     }
+    fclose(train);
 
-    Map word_index = map_new();
-    train_item item;
-    char word[1024];
+    Map inverted_index = map_new();
 
-    while (train_item_get(train, &item)) {
-        FILE *data = fopen(item.filename, "r");
+    for (int i = 0; i < 10; i++) {
+        Pair p = map_get(inverted_index, words[i]);
 
-        while (fscanf(data, "%s", word) > 0) {
-            word_add(word_index, word);
+        if (!p) {
+            Vector vec = vector_new();
+            WIT *new_wit = wit_new(1, 1, 0.4);
+            vector_push(vec, new_wit);
+            map_insert(inverted_index, new_string(words[i]), vec);
+        } else {
+            Vector vec = (Vector)pair_second(p);
+            WIT *new_wit = wit_new(1, 1, 0.4);
+            vector_push(vec, new_wit);
         }
-
-        fclose(data);
     }
 
-    map_foreach(word_index, word_show);
+    map_foreach(inverted_index, inverted_index_show, NULL);
 
-    fclose(train);
-    map_destroy(word_index, free);
+    map_destroy(inverted_index, free, inverted_index_value_free);
 
     return 0;
 }
 
-int train_item_get(FILE *file, train_item *item) {
-    char path_to_file[128];
-    int result = fscanf(file, "%s %s%*c", path_to_file, item->class) > 0;
-    if (!result) {
-        return 0;
-    }
-    strcpy(item->filename, path);
-    strcat(item->filename, "/");
-    strcat(item->filename, path_to_file);
-    return result;
+void vec_show(void *data, void *ctx) {
+    WIT *wit = (WIT *)data;
+    printf("%d %d %f\n", wit->doc, wit->freq, wit->tf_idf);
 }
 
-void word_add(Map map, char *word) {
-    Word_pt w = (Word_pt)map_get(map, word, word_cmp);
-
-    if (!w) {
-        Word_pt new_word = (Word_pt)calloc(1, sizeof(Word));
-        new_word->count = 1;
-        strcpy(new_word->name, word);
-        map_insert(map, word, new_word);
-    } else {
-        w->count += 1;
-    }
+void inverted_index_show(void *data, void *ctx) {
+    Pair p = (Pair)data;
+    Vector vec = pair_second(p);
+    vector_foreach(vec, vec_show, NULL);
 }
 
-int word_cmp(const void *data1, const void *data2) {
-    Word_pt w = (Word_pt)data1;
-    return strcmp(w->name, (char *)data2);
-}
-
-void word_show(void *data) {
-    Word_pt w = (Word_pt)data;
-    printf("%s: %d\n", w->name, w->count);
+WIT *wit_new(int doc, int freq, double tf_idf) {
+    WIT *wit = (WIT *)calloc(1, sizeof(WIT));
+    wit->doc = doc;
+    wit->freq = freq;
+    wit->tf_idf = tf_idf;
+    return wit;
 }
