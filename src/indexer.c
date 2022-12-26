@@ -17,10 +17,13 @@ Document_Index *document_index_new(int doc, int freq, double tf_idf);
 
 void inverted_index_add(Map map, char *word, int doc);
 void inverted_index_show(void *data, void *ctx);
+void map_to_vector(void *data, void *ctx);
 void inverted_index_destroy(void *data);
 
 int main(int argc, char *argv[]) {
     Map inverted_index_map = map_new();
+    Vector inverted_index_vector = vector_new();
+
     int i;
     for (i = 0; i < 4; i++) {
         inverted_index_add(inverted_index_map, doc0[i], 0);
@@ -28,8 +31,12 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < 3; i++) {
         inverted_index_add(inverted_index_map, doc1[i], 1);
     }
+
     map_foreach(inverted_index_map, inverted_index_show, NULL);
+    map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
+
     map_destroy(inverted_index_map, free, inverted_index_destroy);
+    vector_destroy(inverted_index_vector, do_nothing);
     return 0;
 }
 
@@ -75,6 +82,12 @@ void inverted_index_show(void *data, void *ctx) {
     printf("%s  ", key);
     vector_foreach(value, fn, NULL);
     printf("\n");
+}
+
+void map_to_vector(void *data, void *ctx) {
+    Pair p = (Pair)data;
+    Vector v = (Vector)ctx;
+    vector_push(v, p);
 }
 
 void inverted_index_destroy(void *data) {
