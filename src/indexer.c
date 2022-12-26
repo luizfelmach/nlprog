@@ -11,33 +11,34 @@ char *doc1[] = {"carro", "gol", "roubado"};
 typedef struct {
     int doc, freq;
     double tf_idf;
-} Inverted_Index_Item;
+} Document_Index;
 
-Inverted_Index_Item *inverted_index_item_new(int doc, int freq, double tf_idf);
+Document_Index *documet_index_new(int doc, int freq, double tf_idf);
+
 void inverted_index_add(Map map, char *word, int doc);
 void inverted_index_show(void *data, void *ctx);
 void inverted_index_destroy(void *data);
 
 int main(int argc, char *argv[]) {
-    Map inverted_index = map_new();
+    Map inverted_index_map = map_new();
     int i;
     for (i = 0; i < 4; i++) {
-        inverted_index_add(inverted_index, doc0[i], 0);
+        inverted_index_add(inverted_index_map, doc0[i], 0);
     }
     for (i = 0; i < 3; i++) {
-        inverted_index_add(inverted_index, doc1[i], 1);
+        inverted_index_add(inverted_index_map, doc1[i], 1);
     }
-    map_foreach(inverted_index, inverted_index_show, NULL);
-    map_destroy(inverted_index, free, inverted_index_destroy);
+    map_foreach(inverted_index_map, inverted_index_show, NULL);
+    map_destroy(inverted_index_map, free, inverted_index_destroy);
     return 0;
 }
 
-Inverted_Index_Item *inverted_index_item_new(int doc, int freq, double tf_idf) {
-    Inverted_Index_Item *iii = calloc(1, sizeof(Inverted_Index_Item));
-    iii->doc = doc;
-    iii->freq = freq;
-    iii->tf_idf = tf_idf;
-    return iii;
+Document_Index *inverted_index_item_new(int doc, int freq, double tf_idf) {
+    Document_Index *di = calloc(1, sizeof(Document_Index));
+    di->doc = doc;
+    di->freq = freq;
+    di->tf_idf = tf_idf;
+    return di;
 }
 
 void inverted_index_add(Map map, char *word, int doc) {
@@ -47,11 +48,11 @@ void inverted_index_add(Map map, char *word, int doc) {
         p = map_get(map, word);
     }
     Vector value = pair_second(p);
-    Inverted_Index_Item *iii = vector_at(value, doc);
-    if (!iii) {
+    Document_Index *di = vector_at(value, doc);
+    if (!di) {
         vector_push(value, inverted_index_item_new(doc, 1, 0));
     } else {
-        iii->freq += 1;
+        di->freq += 1;
     }
 }
 
@@ -60,8 +61,8 @@ void inverted_index_show(void *data, void *ctx) {
     char *key = pair_first(p);
     Vector value = pair_second(p);
     void fn(void *data, void *ctx) {
-        Inverted_Index_Item *iii = data;
-        printf("%d %d %.2lf     ", iii->doc, iii->freq, iii->tf_idf);
+        Document_Index *di = data;
+        printf("%d %d %.2lf     ", di->doc, di->freq, di->tf_idf);
     }
     printf("%s  ", key);
     vector_foreach(value, fn, NULL);
