@@ -13,7 +13,7 @@ typedef struct {
     double tf_idf;
 } Document_Index;
 
-Document_Index *documet_index_new(int doc, int freq, double tf_idf);
+Document_Index *document_index_new(int doc, int freq, double tf_idf);
 
 void inverted_index_add(Map map, char *word, int doc);
 void inverted_index_show(void *data, void *ctx);
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-Document_Index *inverted_index_item_new(int doc, int freq, double tf_idf) {
+Document_Index *document_index_new(int doc, int freq, double tf_idf) {
     Document_Index *di = calloc(1, sizeof(Document_Index));
     di->doc = doc;
     di->freq = freq;
@@ -58,7 +58,7 @@ void inverted_index_add(Map map, char *word, int doc) {
     };
     Document_Index *di = vector_search(value, fn, &doc);
     if (!di) {
-        vector_push(value, inverted_index_item_new(doc, 1, 0));
+        vector_push(value, document_index_new(doc, 1, 0));
     } else {
         di->freq += 1;
     }
