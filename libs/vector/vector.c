@@ -37,6 +37,16 @@ void vector_foreach(Vector vector, data_fn fn, void *ctx) {
     }
 }
 
+void *vector_search(Vector vector, data_cmp cmp, void *value) {
+    int i;
+    for (i = 0; i < vector->last; i++) {
+        if (!cmp(value, vector->data[i])) {
+            return vector->data[i];
+        }
+    }
+    return NULL;
+}
+
 void vector_destroy(Vector vector, data_destroy destroy) {
     int i;
     for (i = 0; i < vector->last; i++) {
