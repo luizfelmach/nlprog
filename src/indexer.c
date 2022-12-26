@@ -48,7 +48,15 @@ void inverted_index_add(Map map, char *word, int doc) {
         p = map_get(map, word);
     }
     Vector value = pair_second(p);
-    Document_Index *di = vector_at(value, doc);
+    int fn(void *data1, void *data2) {
+        int *value = data1;
+        Document_Index *i = data2;
+        if (i->doc == *value) {
+            return 0;
+        }
+        return 1;
+    };
+    Document_Index *di = vector_search(value, fn, &doc);
     if (!di) {
         vector_push(value, inverted_index_item_new(doc, 1, 0));
     } else {
