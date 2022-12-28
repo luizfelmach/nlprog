@@ -17,13 +17,14 @@ Document_Index *document_index_new(int freq, double tf_idf);
 
 void inverted_index_add(Map map, char *word, char *doc);
 void inverted_index_show(void *data, void *ctx);
-int inverted_index_sort_vector(const void *data1, const void *data2);
-void inverted_index_vector_show(void *data, void *ctx);
-void map_to_vector(void *data, void *ctx);
+int inverted_index_sort(const void *data1, const void *data2);
 void inverted_index_destroy(void *data);
 
 void forward_index_add(Map map, char *doc, int word_index, int freq);
 void forward_index_show(void *data, void *ctx);
+void forward_index_destroy(void *data);
+
+void map_to_vector(void *data, void *ctx);
 
 int main(int argc, char *argv[]) {
     // map<pair<string, map<pair<string, Document_Index>>>>
@@ -47,8 +48,7 @@ int main(int argc, char *argv[]) {
     }
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
-
-    vector_sort(inverted_index_vector, inverted_index_sort_vector);
+    vector_sort(inverted_index_vector, inverted_index_sort);
 
     for (i = 0; i < vector_size(inverted_index_vector); i++) {
         Pair p = vector_at(inverted_index_vector, i);
@@ -64,12 +64,14 @@ int main(int argc, char *argv[]) {
 
     map_foreach(forward_index_map, map_to_vector, forward_index_vector);
 
-    vector_foreach(inverted_index_vector, inverted_index_vector_show, NULL);
+    printf("------ INVERTED INDEX ------\n\n");
+    vector_foreach(inverted_index_vector, inverted_index_show, NULL);
     printf("\n");
+    printf("------ FORWARD INDEX ------\n\n");
     vector_foreach(forward_index_vector, forward_index_show, NULL);
 
     map_destroy(inverted_index_map, free, inverted_index_destroy);
-    map_destroy(forward_index_map, free, free);
+    map_destroy(forward_index_map, free, forward_index_destroy);
     vector_destroy(inverted_index_vector, do_nothing);
     vector_destroy(forward_index_vector, do_nothing);
 
@@ -99,44 +101,25 @@ void inverted_index_add(Map map, char *word, char *doc) {
     di->freq += 1;
 }
 
-void inverted_index_show(void *data, void *ctx) {
-    Pair p = (Pair)data;
-    char *key = pair_first(p);
-    Map value = pair_second(p);
-    void fn(void *data, void *ctx) {
-        char *k = pair_first((Pair)data);
-        Document_Index *di = pair_second((Pair)data);
-        printf("%s %d %.2lf     ", k, di->freq, di->tf_idf);
-    }
-    printf("%s  ", key);
-    map_foreach(value, fn, NULL);
-    printf("\n");
-}
-
-int inverted_index_sort_vector(const void *data1, const void *data2) {
+int inverted_index_sort(const void *data1, const void *data2) {
     const Pair *p1 = data1;
     const Pair *p2 = data2;
     return strcmp((char *)pair_first(*p1), (char *)pair_first(*p2));
 }
 
-void inverted_index_vector_show(void *data, void *ctx) {
+void inverted_index_show(void *data, void *ctx) {
     Pair p = data;
     char *key = pair_first(p);
     Map value = pair_second(p);
     void fn(void *data, void *ctx) {
         char *k = pair_first((Pair)data);
         Document_Index *di = pair_second((Pair)data);
-        printf("%s %d %.2lf     ", k, di->freq, di->tf_idf);
+        printf("document: %s\nfreq: %d\ntf-idf: %.2lf\n\n", k, di->freq,
+               di->tf_idf);
     }
-    printf("%s  ", key);
+    printf("# %s\n", key);
     map_foreach(value, fn, NULL);
     printf("\n");
-}
-
-void map_to_vector(void *data, void *ctx) {
-    Pair p = (Pair)data;
-    Vector v = (Vector)ctx;
-    vector_push(v, p);
 }
 
 void inverted_index_destroy(void *data) {
@@ -166,13 +149,24 @@ void forward_index_show(void *data, void *ctx) {
     Pair p = data;
     char *key = pair_first(p);
     Map value = pair_second(p);
-    printf("doc: %s   ", key);
+    printf("# document %s\n", key);
     void fn(void *data, void *ctx) {
         Pair p = data;
         char *k = pair_first(p);
         int *v = pair_second(p);
-        printf("%s %d   ", k, *v);
+        printf("word: %s\nfreq: %d\n\n", k, *v);
     }
     map_foreach(value, fn, NULL);
     printf("\n");
+}
+
+void map_to_vector(void *data, void *ctx) {
+    Pair p = (Pair)data;
+    Vector v = (Vector)ctx;
+    vector_push(v, p);
+}
+
+void forward_index_destroy(void *data) {
+    Map value = data;
+    map_destroy(data, free, free);
 }
