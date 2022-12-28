@@ -96,6 +96,22 @@ int main(int argc, char *argv[]) {
         map_foreach((Map)pair_second(p), fn, NULL);
     }
 
+    // Generate tf-idf
+    for (i = 0; i < vector_size(forward_index_vector); i++) {
+        Pair p = (Pair)vector_at(forward_index_vector, i);
+        char *key = (char *)pair_first(p);
+        void fn(void *data, void *ctx) {
+            Pair k = data;
+            char *word_index = pair_first(k);
+            Pair po = vector_at(inverted_index_vector, atoi(word_index));
+            Index *di = pair_second(k);
+            di->tf_idf =
+                tf_idf(forward_index_map, inverted_index_map, total_docs, key,
+                       (char *)pair_first(po), atoi(word_index));
+        }
+        map_foreach((Map)pair_second(p), fn, NULL);
+    }
+
     printf("------ INVERTED INDEX ------\n\n");
     vector_foreach(inverted_index_vector, inverted_index_show, NULL);
     printf("\n");
@@ -226,7 +242,7 @@ void populate(Vector words_vector,Map map) {
 double tf(Map forward_index, char *doc, int word_index) {
     Pair p = map_get(forward_index, doc);
     if (!p) {
-        printf("error: unexpected error!\n");
+        printf("error: unexpected error in tf1!\n");
         exit(1);
     }
     Map value = pair_second(p);
@@ -236,7 +252,7 @@ double tf(Map forward_index, char *doc, int word_index) {
 
     Pair k = map_get(value, index);
     if (!k) {
-        printf("error: unexpected error!\n");
+        printf("error: unexpected error in tf2!\n");
         exit(1);
     }
 
@@ -253,7 +269,7 @@ double idf(Map inverted_index, int total_docs, char *word) {
 double df(Map inverted_index, char *word) {
     Pair p = map_get(inverted_index, word);
     if (!p) {
-        printf("error: unexpected error!\n");
+        printf("error: unexpected error in df!\n");
         exit(1);
     }
     Map value = pair_second(p);
