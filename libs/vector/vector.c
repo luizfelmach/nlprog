@@ -51,6 +51,10 @@ void vector_sort(Vector vector, data_cmp cmp) {
     qsort(vector->data, vector->last, sizeof(void *), cmp);
 }
 
+int vector_size(Vector vector) {
+    return vector->last;
+}
+
 void vector_destroy(Vector vector, data_destroy destroy) {
     int i;
     for (i = 0; i < vector->last; i++) {
