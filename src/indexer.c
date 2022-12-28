@@ -10,7 +10,6 @@ int total_docs = 1;
 int last_doc = 0;
 Vector files;
 
-
 typedef struct {
     int freq;
     double tf_idf;
@@ -39,20 +38,20 @@ double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
               char *word, int word_index);
 
 int main(int argc, char *argv[]) {
-    FILE * f = fopen("datasets/small/train/0104042006at2.txt", "r");
-    if(f == NULL){
+    FILE *f = fopen("datasets/small/train/0104042006at2.txt", "r");
+    if (f == NULL) {
         printf("Directory do not exists\n");
         exit(1);
     }
     Vector words_in_doc = vector_new();
     int a = 0;
-    while(!feof(f)){
-        char *word_temp = malloc(sizeof(char)*200);
+    while (!feof(f)) {
+        char *word_temp = malloc(sizeof(char) * 200);
         fscanf(f, "%s", word_temp);
         vector_push(words_in_doc, word_temp);
     }
     fclose(f);
-    
+
     // map<pair<string, map<pair<string, Document_Index>>>>
     Map inverted_index_map = map_new();
     // map<pair<string, map<pair<string, int>>>>
@@ -229,12 +228,12 @@ void forward_index_destroy(void *data) {
     map_destroy(data, free, free);
 }
 
-void populate(Vector words_vector,Map map) {
+void populate(Vector words_vector, Map map) {
     int i;
     char str_index[100];
-    sprintf(str_index,"%d", last_doc);
-    for (i = 0; i < vector_size(words_vector); i ++) {
-        inverted_index_add(map, (char*)vector_at(words_vector, i), str_index);
+    sprintf(str_index, "%d", last_doc);
+    for (i = 0; i < vector_size(words_vector); i++) {
+        inverted_index_add(map, (char *)vector_at(words_vector, i), str_index);
     }
     last_doc++;
 }
