@@ -32,6 +32,9 @@ int main(int argc, char *argv[]) {
     // vector<pair<string, map<string, Document_Index>>>
     Vector inverted_index_vector = vector_new();
 
+    // vector<pair<string, map<pair<string, int>>>>
+    Vector forward_index_vector = vector_new();
+
     int i;
     for (i = 0; i < 4; i++) {
         inverted_index_add(inverted_index_map, doc0[i], "0");
@@ -39,9 +42,9 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < 3; i++) {
         inverted_index_add(inverted_index_map, doc1[i], "1");
     }
-    // map_foreach(inverted_index_map, inverted_index_show, NULL);
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
+    map_foreach(forward_index_map, map_to_vector, forward_index_vector);
 
     vector_sort(inverted_index_vector, inverted_index_sort_vector);
 
