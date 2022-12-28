@@ -6,9 +6,10 @@
 #include <string.h>
 #include <vector.h>
 
-int total_docs = 2;
-char *doc0[] = {"gol", "gol", "time", "gol"};
-char *doc1[] = {"carro", "gol", "roubado"};
+int total_docs = 1;
+int last_doc = 0;
+Vector files;
+
 
 typedef struct {
     int freq;
@@ -28,7 +29,7 @@ void forward_index_destroy(void *data);
 
 void map_to_vector(void *data, void *ctx);
 
-void populate(Map map);
+void populate(Vector words_vector, Map map);
 
 double tf(Map forward_index, char *doc, int word_index);
 double df(Map inverted_index, char *word);
@@ -37,6 +38,20 @@ double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
               char *word, int word_index);
 
 int main(int argc, char *argv[]) {
+    FILE * f = fopen("datasets/small/train/0104042006at2.txt", "r");
+    if(f == NULL){
+        printf("Directory do not exists\n");
+        exit(1);
+    }
+    Vector words_in_doc = vector_new();
+    int a = 0;
+    while(!feof(f)){
+        char *word_temp = malloc(sizeof(char)*200);
+        fscanf(f, "%s", word_temp);
+        vector_push(words_in_doc, word_temp);
+    }
+    fclose(f);
+    
     // map<pair<string, map<pair<string, Document_Index>>>>
     Map inverted_index_map = map_new();
 
@@ -49,7 +64,7 @@ int main(int argc, char *argv[]) {
     // vector<pair<string, map<pair<string, int>>>>
     Vector forward_index_vector = vector_new();
 
-    populate(inverted_index_map);
+    populate(words_in_doc, inverted_index_map);
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
     vector_sort(inverted_index_vector, inverted_index_sort);
@@ -95,6 +110,7 @@ int main(int argc, char *argv[]) {
     vector_destroy(forward_index_vector,
                    do_nothing);  // do nothing because map_destroy is already
                                  // free storage data
+    vector_destroy(words_in_doc, free);
     return 0;
 }
 
@@ -191,14 +207,14 @@ void forward_index_destroy(void *data) {
     map_destroy(data, free, free);
 }
 
-void populate(Map map) {
+void populate(Vector words_vector,Map map) {
     int i;
-    for (i = 0; i < 4; i++) {
-        inverted_index_add(map, doc0[i], "0");
+    char str_index[100];
+    sprintf(str_index,"%d", last_doc);
+    for (i = 0; i < vector_size(words_vector); i ++) {
+        inverted_index_add(map, (char*)vector_at(words_vector, i), str_index);
     }
-    for (i = 0; i < 3; i++) {
-        inverted_index_add(map, doc1[i], "1");
-    }
+    last_doc++;
 }
 
 double tf(Map forward_index, char *doc, int word_index) {

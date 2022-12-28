@@ -42,7 +42,7 @@ $(LIBRARIES_BUILD)%.o: $(LIBRARIES_DIR)*/%.c $(LIBRARIES_DIR)*/%.h
 # ----------- Generate indexer -----------
 $(INDEXER): $(BINARIES_DIR)indexer.c $(ALL_OBJECTS)
 	@echo -e "linking with \033[1;35mindexer\033[0m"
-	@$(CC) $(CC_FLAGS) -o $(INDEXER) $(ALL_INCLUDES) $(BINARIES_DIR)indexer.c $(ALL_OBJECTS)
+	@$(CC) -o $(INDEXER) $(ALL_INCLUDES) $(BINARIES_DIR)indexer.c $(ALL_OBJECTS) $(CC_FLAGS) 
 
 # ----------- Generate nlprog -----------
 $(NLPROG): $(BINARIES_DIR)nlprog.c $(ALL_OBJECTS)
