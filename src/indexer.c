@@ -1,10 +1,12 @@
 #include <map.h>
+#include <math.h>
 #include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector.h>
 
+int total_docs = 2;
 char *doc0[] = {"gol", "gol", "time", "gol"};
 char *doc1[] = {"carro", "gol", "roubado"};
 
@@ -27,6 +29,12 @@ void forward_index_destroy(void *data);
 void map_to_vector(void *data, void *ctx);
 
 void populate(Map map);
+
+double tf(Map forward_index, char *doc, int word_index);
+double df(Map inverted_index, char *word);
+double idf(Map inverted_index, int total_docs, char *word);
+double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
+              char *word, int word_index);
 
 int main(int argc, char *argv[]) {
     // map<pair<string, map<pair<string, Document_Index>>>>
@@ -53,8 +61,22 @@ int main(int argc, char *argv[]) {
         Map value = pair_second(p);
         void fn(void *data, void *ctx) {
             Pair p = data;
-            int *v = pair_second(p);
-            forward_index_add(forward_index_map, (char *)pair_first(p), i, *v);
+            Document_Index *di = pair_second(p);
+            forward_index_add(forward_index_map, (char *)pair_first(p), i,
+                              di->freq);
+        }
+        map_foreach(value, fn, NULL);
+    }
+
+    for (i = 0; i < vector_size(inverted_index_vector); i++) {
+        Pair p = vector_at(inverted_index_vector, i);
+        char *key = pair_first(p);
+        Map value = pair_second(p);
+        void fn(void *data, void *ctx) {
+            Pair p = data;
+            Document_Index *di = pair_second(p);
+            di->tf_idf = tf_idf(forward_index_map, inverted_index_map,
+                                total_docs, (char *)pair_first(p), key, i);
         }
         map_foreach(value, fn, NULL);
     }
@@ -177,4 +199,52 @@ void populate(Map map) {
     for (i = 0; i < 3; i++) {
         inverted_index_add(map, doc1[i], "1");
     }
+}
+
+double tf(Map forward_index, char *doc, int word_index) {
+    Pair p = map_get(forward_index, doc);
+    if (!p) {
+        printf("error: unexpected error!\n");
+        exit(1);
+    }
+    Map value = pair_second(p);
+
+    char index[1028];
+    sprintf(index, "%d", word_index);
+
+    Pair k = map_get(value, index);
+    if (!k) {
+        printf("error: unexpected error!\n");
+        exit(1);
+    }
+
+    int *freq = pair_second(k);
+    return (double)*freq;
+}
+
+double idf(Map inverted_index, int total_docs, char *word) {
+    double result = log((1 + total_docs) / (1 + df(inverted_index, word)));
+    result += 1;
+    return result;
+}
+
+double df(Map inverted_index, char *word) {
+    Pair p = map_get(inverted_index, word);
+    if (!p) {
+        printf("error: unexpected error!\n");
+        exit(1);
+    }
+    Map value = pair_second(p);
+    int count = 0;
+    void fn(void *data, void *ctx) {
+        *(int *)ctx += 1;
+    }
+    map_foreach(value, fn, &count);
+    return count;
+}
+
+double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
+              char *word, int word_index) {
+    return tf(forward_index, doc, word_index) *
+           idf(inverted_index, total_docs, word);
 }
