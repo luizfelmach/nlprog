@@ -4,6 +4,7 @@
 #include <vector.h>
 
 void vec_show(void *data, void *ctx);
+int vec_desc(const void *data1, const void *data2);
 
 int main() {
     Vector vec = vector_new();
@@ -14,6 +15,8 @@ int main() {
     }
 
     vector_foreach(vec, vec_show, NULL);
+    vector_sort(vec, vec_desc);
+    vector_foreach(vec, vec_show, NULL);
 
     vector_destroy(vec, free);
     return 0;
@@ -22,4 +25,11 @@ int main() {
 void vec_show(void *data, void *ctx) {
     int *value = (int *)data;
     printf("%d\n", *value);
+}
+
+int vec_desc(const void *data1, const void *data2) {
+    const int *i1 = data1;
+    const int *i2 = data2;
+
+    return *i2 - *i1;
 }

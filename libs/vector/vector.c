@@ -47,6 +47,10 @@ void *vector_search(Vector vector, data_cmp cmp, void *value) {
     return NULL;
 }
 
+void vector_sort(Vector vector, data_cmp cmp) {
+    qsort(vector->data, vector->last, sizeof(void *), cmp);
+}
+
 void vector_destroy(Vector vector, data_destroy destroy) {
     int i;
     for (i = 0; i < vector->last; i++) {
