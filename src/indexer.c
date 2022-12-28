@@ -17,6 +17,8 @@ Document_Index *document_index_new(int freq, double tf_idf);
 
 void inverted_index_add(Map map, char *word, char *doc);
 void inverted_index_show(void *data, void *ctx);
+int inverted_index_sort_vector(const void *data1, const void *data2);
+void inverted_index_vector_show(void *data, void *ctx);
 void map_to_vector(void *data, void *ctx);
 void inverted_index_destroy(void *data);
 
@@ -37,9 +39,13 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < 3; i++) {
         inverted_index_add(inverted_index_map, doc1[i], "1");
     }
-    map_foreach(inverted_index_map, inverted_index_show, NULL);
+    // map_foreach(inverted_index_map, inverted_index_show, NULL);
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
+
+    vector_sort(inverted_index_vector, inverted_index_sort_vector);
+
+    vector_foreach(inverted_index_vector, inverted_index_vector_show, NULL);
 
     map_destroy(inverted_index_map, free, inverted_index_destroy);
     map_destroy(forward_index_map, free, free);
@@ -72,6 +78,26 @@ void inverted_index_add(Map map, char *word, char *doc) {
 
 void inverted_index_show(void *data, void *ctx) {
     Pair p = (Pair)data;
+    char *key = pair_first(p);
+    Map value = pair_second(p);
+    void fn(void *data, void *ctx) {
+        char *k = pair_first((Pair)data);
+        Document_Index *di = pair_second((Pair)data);
+        printf("%s %d %.2lf     ", k, di->freq, di->tf_idf);
+    }
+    printf("%s  ", key);
+    map_foreach(value, fn, NULL);
+    printf("\n");
+}
+
+int inverted_index_sort_vector(const void *data1, const void *data2) {
+    const Pair *p1 = data1;
+    const Pair *p2 = data2;
+    return strcmp((char *)pair_first(*p1), (char *)pair_first(*p2));
+}
+
+void inverted_index_vector_show(void *data, void *ctx) {
+    Pair p = data;
     char *key = pair_first(p);
     Map value = pair_second(p);
     void fn(void *data, void *ctx) {
