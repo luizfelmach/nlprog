@@ -13,9 +13,10 @@ char *doc1[] = {"carro", "gol", "roubado"};
 typedef struct {
     int freq;
     double tf_idf;
-} Document_Index;
+} Index;
 
-Document_Index *document_index_new(int freq, double tf_idf);
+Index *index_new(int freq, double tf_idf);
+void index_show(Index *di);
 
 void inverted_index_add(Map map, char *word, char *doc);
 void inverted_index_show(void *data, void *ctx);
@@ -37,13 +38,13 @@ double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
               char *word, int word_index);
 
 int main(int argc, char *argv[]) {
-    // map<pair<string, map<pair<string, Document_Index>>>>
+    // map<pair<string, map<pair<string, Index>>>>
     Map inverted_index_map = map_new();
 
     // map<pair<string, map<pair<string, int>>>>
     Map forward_index_map = map_new();
 
-    // vector<pair<string, map<string, Document_Index>>>
+    // vector<pair<string, map<string, Index>>>
     Vector inverted_index_vector = vector_new();
 
     // vector<pair<string, map<pair<string, int>>>>
@@ -61,7 +62,7 @@ int main(int argc, char *argv[]) {
         Map value = pair_second(p);
         void fn(void *data, void *ctx) {
             Pair p = data;
-            Document_Index *di = pair_second(p);
+            Index *di = pair_second(p);
             forward_index_add(forward_index_map, (char *)pair_first(p), i,
                               di->freq);
         }
@@ -74,7 +75,7 @@ int main(int argc, char *argv[]) {
         Map value = pair_second(p);
         void fn(void *data, void *ctx) {
             Pair p = data;
-            Document_Index *di = pair_second(p);
+            Index *di = pair_second(p);
             di->tf_idf = tf_idf(forward_index_map, inverted_index_map,
                                 total_docs, (char *)pair_first(p), key, i);
         }
@@ -98,11 +99,16 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-Document_Index *document_index_new(int freq, double tf_idf) {
-    Document_Index *di = calloc(1, sizeof(Document_Index));
+Index *index_new(int freq, double tf_idf) {
+    Index *di = calloc(1, sizeof(Index));
     di->freq = freq;
     di->tf_idf = tf_idf;
     return di;
+}
+
+void index_show(Index *di) {
+    printf("freq: %d\n", di->freq);
+    printf("tf-idf: %.2lf", di->tf_idf);
 }
 
 void inverted_index_add(Map map, char *word, char *doc) {
@@ -114,10 +120,10 @@ void inverted_index_add(Map map, char *word, char *doc) {
     Map value = pair_second(p);
     Pair k = map_get(value, doc);
     if (!k) {
-        map_insert(value, new_string(doc), document_index_new(0, 0));
+        map_insert(value, new_string(doc), index_new(0, 0));
         k = map_get(value, doc);
     }
-    Document_Index *di = pair_second(k);
+    Index *di = pair_second(k);
     di->freq += 1;
 }
 
@@ -133,7 +139,7 @@ void inverted_index_show(void *data, void *ctx) {
     Map value = pair_second(p);
     void fn(void *data, void *ctx) {
         char *k = pair_first((Pair)data);
-        Document_Index *di = pair_second((Pair)data);
+        Index *di = pair_second((Pair)data);
         printf("document: %s\nfreq: %d\ntf-idf: %.2lf\n\n", k, di->freq,
                di->tf_idf);
     }
