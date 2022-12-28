@@ -26,6 +26,8 @@ void forward_index_destroy(void *data);
 
 void map_to_vector(void *data, void *ctx);
 
+void populate(Map map);
+
 int main(int argc, char *argv[]) {
     // map<pair<string, map<pair<string, Document_Index>>>>
     Map inverted_index_map = map_new();
@@ -39,17 +41,12 @@ int main(int argc, char *argv[]) {
     // vector<pair<string, map<pair<string, int>>>>
     Vector forward_index_vector = vector_new();
 
-    int i;
-    for (i = 0; i < 4; i++) {
-        inverted_index_add(inverted_index_map, doc0[i], "0");
-    }
-    for (i = 0; i < 3; i++) {
-        inverted_index_add(inverted_index_map, doc1[i], "1");
-    }
+    populate(inverted_index_map);
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
     vector_sort(inverted_index_vector, inverted_index_sort);
 
+    int i;
     for (i = 0; i < vector_size(inverted_index_vector); i++) {
         Pair p = vector_at(inverted_index_vector, i);
         char *key = pair_first(p);
@@ -73,8 +70,9 @@ int main(int argc, char *argv[]) {
     map_destroy(inverted_index_map, free, inverted_index_destroy);
     map_destroy(forward_index_map, free, forward_index_destroy);
     vector_destroy(inverted_index_vector, do_nothing);
-    vector_destroy(forward_index_vector, do_nothing);
-
+    vector_destroy(forward_index_vector,
+                   do_nothing);  // do nothing because map_destroy is already
+                                 // free storage data
     return 0;
 }
 
@@ -169,4 +167,14 @@ void map_to_vector(void *data, void *ctx) {
 void forward_index_destroy(void *data) {
     Map value = data;
     map_destroy(data, free, free);
+}
+
+void populate(Map map) {
+    int i;
+    for (i = 0; i < 4; i++) {
+        inverted_index_add(map, doc0[i], "0");
+    }
+    for (i = 0; i < 3; i++) {
+        inverted_index_add(map, doc1[i], "1");
+    }
 }
