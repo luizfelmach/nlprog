@@ -22,6 +22,9 @@ void inverted_index_vector_show(void *data, void *ctx);
 void map_to_vector(void *data, void *ctx);
 void inverted_index_destroy(void *data);
 
+void forward_index_add(Map map, char *doc, int word_index, int freq);
+void forward_index_show(void *data, void *ctx);
+
 int main(int argc, char *argv[]) {
     // map<pair<string, map<pair<string, Document_Index>>>>
     Map inverted_index_map = map_new();
@@ -44,15 +47,32 @@ int main(int argc, char *argv[]) {
     }
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
-    map_foreach(forward_index_map, map_to_vector, forward_index_vector);
 
     vector_sort(inverted_index_vector, inverted_index_sort_vector);
 
+    for (i = 0; i < vector_size(inverted_index_vector); i++) {
+        Pair p = vector_at(inverted_index_vector, i);
+        char *key = pair_first(p);
+        Map value = pair_second(p);
+        void fn(void *data, void *ctx) {
+            Pair p = data;
+            int *v = pair_second(p);
+            forward_index_add(forward_index_map, (char *)pair_first(p), i, *v);
+        }
+        map_foreach(value, fn, NULL);
+    }
+
+    map_foreach(forward_index_map, map_to_vector, forward_index_vector);
+
     vector_foreach(inverted_index_vector, inverted_index_vector_show, NULL);
+    printf("\n");
+    vector_foreach(forward_index_vector, forward_index_show, NULL);
 
     map_destroy(inverted_index_map, free, inverted_index_destroy);
     map_destroy(forward_index_map, free, free);
     vector_destroy(inverted_index_vector, do_nothing);
+    vector_destroy(forward_index_vector, do_nothing);
+
     return 0;
 }
 
@@ -122,4 +142,37 @@ void map_to_vector(void *data, void *ctx) {
 void inverted_index_destroy(void *data) {
     Map value = data;
     map_destroy(data, free, free);
+}
+
+void forward_index_add(Map map, char *doc, int word_index, int freq) {
+    Pair p = map_get(map, doc);
+    if (!p) {
+        map_insert(map, new_string(doc), map_new());
+        p = map_get(map, doc);
+    }
+    Map value = pair_second(p);
+    char key[2048];
+    sprintf(key, "%d", word_index);
+    Pair k = map_get(value, key);
+    if (!k) {
+        map_insert(value, new_string(key), new_int(0));
+        k = map_get(value, key);
+    }
+    int *v = pair_second(k);
+    *v += freq;
+}
+
+void forward_index_show(void *data, void *ctx) {
+    Pair p = data;
+    char *key = pair_first(p);
+    Map value = pair_second(p);
+    printf("doc: %s   ", key);
+    void fn(void *data, void *ctx) {
+        Pair p = data;
+        char *k = pair_first(p);
+        int *v = pair_second(p);
+        printf("%s %d   ", k, *v);
+    }
+    map_foreach(value, fn, NULL);
+    printf("\n");
 }
