@@ -39,7 +39,6 @@ double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
               char *word, int word_index);
 
 int main(int argc, char *argv[]) {
-    
     if (argc < 3) {
         printf("error: missing parameters.\n");
         exit(1);
@@ -69,7 +68,6 @@ int main(int argc, char *argv[]) {
         printf("error: can not open file '%s'.\n", file_output_name);
         exit(1);
     }
-
 
     Vector files_train_name = vector_new();
 
@@ -150,16 +148,15 @@ int main(int argc, char *argv[]) {
     }
 
     printf("------ INVERTED INDEX ------\n\n");
-    int size = vector_size(inverted_index_vector); 
-    fwrite(&size, 1, sizeof(int), file_output); // size vector
+    int size = vector_size(inverted_index_vector);
+    fwrite(&size, 1, sizeof(int), file_output);  // size vector
     vector_foreach(inverted_index_vector, inverted_index_show, file_output);
     vector_foreach(inverted_index_vector, inverted_index_write, file_output);
     printf("\n");
-    
-    
+
     printf("------ FORWARD INDEX ------\n\n");
-    size = vector_size(forward_index_vector); 
-    fwrite(&size, 1, sizeof(int), file_output); // size vector
+    size = vector_size(forward_index_vector);
+    fwrite(&size, 1, sizeof(int), file_output);  // size vector
     vector_foreach(forward_index_vector, forward_index_show, file_output);
     vector_foreach(forward_index_vector, forward_index_write, file_output);
     fclose(file_output);
@@ -184,8 +181,8 @@ void index_show(Index *di) {
 }
 
 void index_write(Index *di, void *ctx) {
-    fwrite(&di->freq, 1, sizeof(int), (FILE*)ctx);
-    fwrite(&di->tf_idf, 1, sizeof(double), (FILE*)ctx);
+    fwrite(&di->freq, 1, sizeof(int), (FILE *)ctx);
+    fwrite(&di->tf_idf, 1, sizeof(double), (FILE *)ctx);
 }
 
 void inverted_index_add(Map map, char *word, char *doc) {
@@ -229,19 +226,19 @@ void inverted_index_show(void *data, void *ctx) {
 void inverted_index_write(void *data, void *ctx) {
     Pair p = data;
     char *key = pair_first(p);
-    int len = strlen(key) + 1; // size name
+    int len = strlen(key) + 1;  // size name
     Map value = pair_second(p);
     void fn(void *data, void *ctx) {
         int k = atoi(pair_first((Pair)data));
         Index *di = pair_second((Pair)data);
-        fwrite(&k, 1, sizeof(int), (FILE*)ctx); // index document
-        index_write(di, ctx); // show freq and tf-idf
+        fwrite(&k, 1, sizeof(int), (FILE *)ctx);  // index document
+        index_write(di, ctx);                     // show freq and tf-idf
     }
-    fwrite(&len, 1, sizeof(int), (FILE*)ctx); // size name
-    fwrite(key, len , sizeof(char), (FILE*)ctx); // name
-    
+    fwrite(&len, 1, sizeof(int), (FILE *)ctx);    // size name
+    fwrite(key, len, sizeof(char), (FILE *)ctx);  // name
+
     len = map_size(value);
-    fwrite(&len, 1, sizeof(int), (FILE*)ctx); // size Index
+    fwrite(&len, 1, sizeof(int), (FILE *)ctx);  // size Index
 
     map_foreach(value, fn, ctx);
 }
@@ -292,16 +289,16 @@ void forward_index_write(void *data, void *ctx) {
     Map value = pair_second(p);
     int size = map_size(value);
 
-    fwrite(&key, 1, sizeof(int), (FILE*)ctx);
+    fwrite(&key, 1, sizeof(int), (FILE *)ctx);
     void fn(void *data, void *ctx) {
         Pair p = data;
         int k = atoi(pair_first(p));
         Index *di = pair_second(p);
-        fwrite(&k, 1, sizeof(int), (FILE*)ctx); // word index
-        index_write(di,ctx);
+        fwrite(&k, 1, sizeof(int), (FILE *)ctx);  // word index
+        index_write(di, ctx);
     }
     // tamanho do banco de ṕalavras
-    fwrite(&size, 1, sizeof(int), (FILE*)ctx);
+    fwrite(&size, 1, sizeof(int), (FILE *)ctx);
     map_foreach(value, fn, ctx);
 }
 
