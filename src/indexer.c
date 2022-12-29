@@ -39,6 +39,7 @@ double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
               char *word, int word_index);
 
 int main(int argc, char *argv[]) {
+    
     if (argc < 3) {
         printf("error: missing parameters.\n");
         exit(1);
