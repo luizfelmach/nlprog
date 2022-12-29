@@ -1,5 +1,5 @@
-#ifndef ALGORITHM_H
-#define ALGORITHM_H
+#ifndef ALGO_H
+#define ALGO_H
 
 // Vector
 
@@ -11,4 +11,4 @@ void vec_show_char(void *data, void *ctx);
 
 // Map
 
-#endif  // ALGORITHM_H
+#endif  // ALGO_H

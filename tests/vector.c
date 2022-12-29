@@ -1,4 +1,4 @@
-#include <algorithm.h>
+#include <algo.h>
 #include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
