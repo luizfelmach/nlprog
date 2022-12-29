@@ -8,7 +8,7 @@ const static int MAX = 12289;  // Good prime number for hash tables
 
 struct _map {
     Linkedlist *data;
-    int capacity;
+    int capacity, size;
 };
 
 Map map_new() {
@@ -54,6 +54,7 @@ void map_insert(Map map, char *key, void *data) {
     Pair p = pair_new(key, data);
 
     linkedlist_add(map->data[index], p);
+    map->size += 1;
 }
 
 void map_foreach(Map map, data_fn fn, void *ctx) {
@@ -63,6 +64,10 @@ void map_foreach(Map map, data_fn fn, void *ctx) {
             linkedlist_foreach(map->data[i], fn, ctx);
         }
     }
+}
+
+int map_size(Map map) {
+    return map->size;
 }
 
 void map_destroy(Map map, data_destroy destroy_key,
