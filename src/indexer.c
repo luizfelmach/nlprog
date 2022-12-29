@@ -305,12 +305,7 @@ double df(Map inverted_index, char *word) {
         exit(1);
     }
     Map value = pair_second(p);
-    int count = 0;
-    void fn(void *data, void *ctx) {
-        *(int *)ctx += 1;
-    }
-    map_foreach(value, fn, &count);
-    return count;
+    return map_size(value);
 }
 
 double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
