@@ -14,15 +14,18 @@ typedef struct {
 } Index;
 
 Index *index_new(int freq, double tf_idf);
-void index_show(Index *di, void *ctx);
+void index_show(Index *di);
+void index_write(Index *di, void *ctx);
 
 void inverted_index_add(Map map, char *word, char *doc);
 void inverted_index_show(void *data, void *ctx);
+void inverted_index_write(void *data, void *ctx);
 int inverted_index_sort(const void *data1, const void *data2);
 void inverted_index_destroy(void *data);
 
 void forward_index_add(Map map, char *doc, int word_index, Index *di);
 void forward_index_show(void *data, void *ctx);
+void forward_index_write(void *data, void *ctx);
 void forward_index_destroy(void *data);
 
 void map_to_vector(void *data, void *ctx);
@@ -146,10 +149,18 @@ int main(int argc, char *argv[]) {
     }
 
     printf("------ INVERTED INDEX ------\n\n");
+    int size = vector_size(inverted_index_vector); 
+    fwrite(&size, 1, sizeof(int), file_output); // size vector
     vector_foreach(inverted_index_vector, inverted_index_show, file_output);
+    vector_foreach(inverted_index_vector, inverted_index_write, file_output);
     printf("\n");
+    
+    
     printf("------ FORWARD INDEX ------\n\n");
-    //vector_foreach(forward_index_vector, forward_index_show, NULL);
+    size = vector_size(forward_index_vector); 
+    fwrite(&size, 1, sizeof(int), file_output); // size vector
+    vector_foreach(forward_index_vector, forward_index_show, file_output);
+    vector_foreach(forward_index_vector, forward_index_write, file_output);
     fclose(file_output);
 
     map_destroy(inverted_index_map, free, inverted_index_destroy);
@@ -166,9 +177,14 @@ Index *index_new(int freq, double tf_idf) {
     return di;
 }
 
-void index_show(Index *di, void *ctx) {
-    fprintf((FILE*)ctx,"freq: %d\n", di->freq);
-    fprintf((FILE*)ctx,"tf-idf: %.2lf", di->tf_idf);
+void index_show(Index *di) {
+    printf("freq: %d\n", di->freq);
+    printf("tf-idf: %.2lf", di->tf_idf);
+}
+
+void index_write(Index *di, void *ctx) {
+    fwrite(&di->freq, 1, sizeof(int), (FILE*)ctx);
+    fwrite(&di->tf_idf, 1, sizeof(double), (FILE*)ctx);
 }
 
 void inverted_index_add(Map map, char *word, char *doc) {
@@ -200,14 +216,33 @@ void inverted_index_show(void *data, void *ctx) {
     void fn(void *data, void *ctx) {
         char *k = pair_first((Pair)data);
         Index *di = pair_second((Pair)data);
-        fprintf((FILE*)ctx ,"document: %s\n", k); // index
-        index_show(di, ctx); //freq tf-idf
-        fprintf((FILE*)ctx, "\n\n"); 
+        printf("document: %s\n", k);
+        index_show(di);
+        printf("\n\n");
     }
-    fprintf((FILE*)ctx,"# %s\n", key); // name
-    // qtdd de arquivos que essa palavra contem
-    map_foreach(value, fn, ctx);
+    printf("# %s\n", key);
+    map_foreach(value, fn, NULL);
     printf("\n");
+}
+
+void inverted_index_write(void *data, void *ctx) {
+    Pair p = data;
+    char *key = pair_first(p);
+    int len = strlen(key) + 1; // size name
+    Map value = pair_second(p);
+    void fn(void *data, void *ctx) {
+        int k = atoi(pair_first((Pair)data));
+        Index *di = pair_second((Pair)data);
+        fwrite(&k, 1, sizeof(int), (FILE*)ctx); // index document
+        index_write(di, ctx); // show freq and tf-idf
+    }
+    fwrite(&len, 1, sizeof(int), (FILE*)ctx); // size name
+    fwrite(key, len , sizeof(char), (FILE*)ctx); // name
+    
+    len = map_size(value);
+    fwrite(&len, 1, sizeof(int), (FILE*)ctx); // size Index
+
+    map_foreach(value, fn, ctx);
 }
 
 void inverted_index_destroy(void *data) {
@@ -243,11 +278,30 @@ void forward_index_show(void *data, void *ctx) {
         char *k = pair_first(p);
         Index *di = pair_second(p);
         printf("word: %s\n", k);
-        index_show(di,ctx);
+        index_show(di);
         printf("\n\n");
     }
     map_foreach(value, fn, NULL);
     printf("\n");
+}
+
+void forward_index_write(void *data, void *ctx) {
+    Pair p = data;
+    int key = atoi(pair_first(p));
+    Map value = pair_second(p);
+    int size = map_size(value);
+
+    fwrite(&key, 1, sizeof(int), (FILE*)ctx);
+    void fn(void *data, void *ctx) {
+        Pair p = data;
+        int k = atoi(pair_first(p));
+        Index *di = pair_second(p);
+        fwrite(&k, 1, sizeof(int), (FILE*)ctx); // word index
+        index_write(di,ctx);
+    }
+    // tamanho do banco de ṕalavras
+    fwrite(&size, 1, sizeof(int), (FILE*)ctx);
+    map_foreach(value, fn, ctx);
 }
 
 void map_to_vector(void *data, void *ctx) {
