@@ -27,7 +27,7 @@ void forward_index_destroy(void *data);
 
 void map_to_vector(void *data, void *ctx);
 
-void populate(Vector words_vector, Map map);
+void get_words(Vector files_train_name, Map map);
 
 double tf(Map forward_index, char *doc, int word_index);
 double df(Map inverted_index, char *word);
@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     char file_input_name[2048];
     char file_output_name[2048];
 
+    // Build files name of input and output
     sprintf(file_input_name, "%s/train.txt", argv[1]);
     sprintf(file_output_name, "%s/%s", argv[1], argv[2]);
 
@@ -68,17 +69,16 @@ int main(int argc, char *argv[]) {
 
     Vector files_train_name = vector_new();
 
+    // Get all files name in folder /train
     while (1) {
         char *file_train_name = malloc(sizeof(char) * 1024);
-        char *temp = malloc(sizeof(char) * 1024);
+        char temp[1024];
         if (fscanf(file_input, "%s %*s", temp) < 1) {
-            free(temp);
             free(file_train_name);
             break;
         }
         sprintf(file_train_name, "%s/%s", argv[1], temp);
         vector_push(files_train_name, file_train_name);
-        free(temp);
     }
 
     total_docs = vector_size(files_train_name);
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     // vector<pair<string, map<pair<string, int>>>>
     Vector forward_index_vector = vector_new();
 
-    populate(files_train_name, inverted_index_map);
+    get_words(files_train_name, inverted_index_map);
     vector_destroy(files_train_name, free);
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
@@ -155,9 +155,7 @@ int main(int argc, char *argv[]) {
     map_destroy(inverted_index_map, free, inverted_index_destroy);
     map_destroy(forward_index_map, free, forward_index_destroy);
     vector_destroy(inverted_index_vector, do_nothing);
-    vector_destroy(forward_index_vector,
-                   do_nothing);  // do nothing because map_destroy is already
-                                 // free storage data
+    vector_destroy(forward_index_vector, do_nothing);
     return 0;
 }
 
@@ -263,7 +261,7 @@ void forward_index_destroy(void *data) {
     map_destroy(data, free, free);
 }
 
-void populate(Vector files_train_name, Map map) {
+void get_words(Vector files_train_name, Map map) {
     int i;
     for (i = 0; i < vector_size(files_train_name); i++) {
         char *file_train_name = vector_at(files_train_name, i);

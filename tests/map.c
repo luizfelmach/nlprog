@@ -27,6 +27,7 @@ int main() {
         }
     }
 
+    printf("Total keys: %d\n\n", map_size(map));
     map_foreach(map, map_show, NULL);
 
     map_destroy(map, free, free);

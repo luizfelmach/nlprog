@@ -11,6 +11,7 @@ typedef struct _map *Map;
 Map map_new();
 Pair map_get(Map map, char *key);
 void map_insert(Map map, char *key, void *data);
+int map_size(Map map);
 void map_foreach(Map map, data_fn fn, void *ctx);
 void map_destroy(Map map, data_destroy destroy_key, data_destroy destroy_value);
 
