@@ -6,9 +6,7 @@
 #include <string.h>
 #include <vector.h>
 
-int total_docs = 1;
-int last_doc = 0;
-Vector files;
+int total_docs = 0;
 
 typedef struct {
     int freq;
@@ -38,19 +36,45 @@ double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
               char *word, int word_index);
 
 int main(int argc, char *argv[]) {
-    FILE *f = fopen("datasets/small/train/0104042006at2.txt", "r");
-    if (f == NULL) {
-        printf("Directory do not exists\n");
+    if (argc < 3) {
+        printf("error: missing parameters.\n");
         exit(1);
     }
-    Vector words_in_doc = vector_new();
-    int a = 0;
-    while (!feof(f)) {
-        char *word_temp = malloc(sizeof(char) * 200);
-        fscanf(f, "%s", word_temp);
-        vector_push(words_in_doc, word_temp);
+
+    char file_input_name[2048];
+    char file_output_name[2048];
+
+    sprintf(file_input_name, "%s/train.txt", argv[1]);
+    sprintf(file_output_name, "%s/%s", argv[1], argv[2]);
+
+    printf("info: current folder is '%s'.\n", argv[1]);
+    printf("info: path to file input is '%s'.\n", file_input_name);
+    printf("info: path to file output is '%s'.\n", file_output_name);
+
+    FILE *file_input = fopen(file_input_name, "r");
+
+    if (!file_input) {
+        printf("error: can not open file '%s'.\n", file_input_name);
+        exit(1);
     }
-    fclose(f);
+
+    Vector files_train_name = vector_new();
+
+    while (1) {
+        char *file_train_name = malloc(sizeof(char) * 1024);
+        char *temp = malloc(sizeof(char) * 1024);
+        if (fscanf(file_input, "%s %*s", temp) < 1) {
+            free(temp);
+            free(file_train_name);
+            break;
+        }
+        sprintf(file_train_name, "%s/%s", argv[1], temp);
+        vector_push(files_train_name, file_train_name);
+    }
+
+    total_docs = vector_size(files_train_name);
+
+    fclose(file_input);
 
     // map<pair<string, map<pair<string, Document_Index>>>>
     Map inverted_index_map = map_new();
@@ -61,7 +85,8 @@ int main(int argc, char *argv[]) {
     // vector<pair<string, map<pair<string, int>>>>
     Vector forward_index_vector = vector_new();
 
-    populate(words_in_doc, inverted_index_map);
+    populate(files_train_name, inverted_index_map);
+    vector_destroy(files_train_name, free);
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
     vector_sort(inverted_index_vector, inverted_index_sort);
@@ -123,7 +148,6 @@ int main(int argc, char *argv[]) {
     vector_destroy(forward_index_vector,
                    do_nothing);  // do nothing because map_destroy is already
                                  // free storage data
-    vector_destroy(words_in_doc, free);
     return 0;
 }
 
@@ -228,14 +252,23 @@ void forward_index_destroy(void *data) {
     map_destroy(data, free, free);
 }
 
-void populate(Vector words_vector, Map map) {
+void populate(Vector files_train_name, Map map) {
     int i;
-    char str_index[100];
-    sprintf(str_index, "%d", last_doc);
-    for (i = 0; i < vector_size(words_vector); i++) {
-        inverted_index_add(map, (char *)vector_at(words_vector, i), str_index);
+    for (i = 0; i < vector_size(files_train_name); i++) {
+        char *file_train_name = vector_at(files_train_name, i);
+        FILE *file_train = fopen(file_train_name, "r");
+        while (1) {
+            char *word = malloc(sizeof(char) * 2048);
+            if (fscanf(file_train, "%s", word) < 1) {
+                free(word);
+                break;
+            }
+            char doc[1024];
+            sprintf(doc, "%d", i);
+            inverted_index_add(map, word, doc);
+        }
+        fclose(file_train);
     }
-    last_doc++;
 }
 
 double tf(Map forward_index, char *doc, int word_index) {
