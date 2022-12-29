@@ -146,9 +146,7 @@ int main(int argc, char *argv[]) {
     map_destroy(inverted_index_map, free, inverted_index_destroy);
     map_destroy(forward_index_map, free, forward_index_destroy);
     vector_destroy(inverted_index_vector, do_nothing);
-    vector_destroy(forward_index_vector,
-                   do_nothing);  // do nothing because map_destroy is already
-                                 // free storage data
+    vector_destroy(forward_index_vector, do_nothing);
     return 0;
 }
 
