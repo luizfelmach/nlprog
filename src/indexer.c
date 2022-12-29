@@ -70,22 +70,40 @@ int main(int argc, char *argv[]) {
     }
 
     Vector files_train_name = vector_new();
-
+    Vector files_train_class = vector_new();
     // Get all files name in folder /train
     while (1) {
+        char *file_train_class = malloc(sizeof(char) * 1024);
         char *file_train_name = malloc(sizeof(char) * 1024);
+        char class_temp[1024];
         char temp[1024];
-        if (fscanf(file_input, "%s %*s", temp) < 1) {
+        if (fscanf(file_input, "%s %s", temp, class_temp) < 1) {
             free(file_train_name);
+            free(file_train_class);
             break;
         }
         sprintf(file_train_name, "%s/%s", argv[1], temp);
+        sprintf(file_train_class, "%s", class_temp);
         vector_push(files_train_name, file_train_name);
+        vector_push(files_train_class, file_train_class);
     }
 
     total_docs = vector_size(files_train_name);
 
     fclose(file_input);
+
+    int i;
+    int size = vector_size(files_train_class);
+    int len = strlen((char *)vector_at(files_train_class, 0)) + 1;
+
+    fwrite(&size, 1, sizeof(int), file_output);  // vector size
+
+    // writing document classes
+    for (i = 0; i < vector_size(files_train_class); i++) {
+        char *class_temp = vector_at(files_train_class, i);
+        fwrite(class_temp, len, sizeof(char), file_output);
+        // printf("%s\n", class_temp);
+    }
 
     // map<pair<string, map<pair<string, Document_Index>>>>
     Map inverted_index_map = map_new();
@@ -98,11 +116,10 @@ int main(int argc, char *argv[]) {
 
     get_words(files_train_name, inverted_index_map);
     vector_destroy(files_train_name, free);
+    vector_destroy(files_train_class, free);
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
     vector_sort(inverted_index_vector, inverted_index_sort);
-
-    int i;
 
     // Generate forward index
     for (i = 0; i < vector_size(inverted_index_vector); i++) {
@@ -147,14 +164,14 @@ int main(int argc, char *argv[]) {
         map_foreach((Map)pair_second(p), fn, NULL);
     }
 
-    printf("------ INVERTED INDEX ------\n\n");
-    int size = vector_size(inverted_index_vector);
+    printf("------ WRITING INVERTED INDEX ------\n\n");
+    size = vector_size(inverted_index_vector);
     fwrite(&size, 1, sizeof(int), file_output);  // size vector
     vector_foreach(inverted_index_vector, inverted_index_show, file_output);
     vector_foreach(inverted_index_vector, inverted_index_write, file_output);
     printf("\n");
 
-    printf("------ FORWARD INDEX ------\n\n");
+    printf("------ WRITING FORWARD INDEX ------\n\n");
     size = vector_size(forward_index_vector);
     fwrite(&size, 1, sizeof(int), file_output);  // size vector
     vector_foreach(forward_index_vector, forward_index_show, file_output);
