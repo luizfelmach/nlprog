@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
         }
         sprintf(file_train_name, "%s/%s", argv[1], temp);
         vector_push(files_train_name, file_train_name);
+        free(temp);
     }
 
     total_docs = vector_size(files_train_name);
@@ -266,6 +267,7 @@ void populate(Vector files_train_name, Map map) {
             char doc[1024];
             sprintf(doc, "%d", i);
             inverted_index_add(map, word, doc);
+            free(word);
         }
         fclose(file_train);
     }
