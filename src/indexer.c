@@ -14,7 +14,7 @@ typedef struct {
 } Index;
 
 Index *index_new(int freq, double tf_idf);
-void index_show(Index *di);
+void index_show(Index *di, void *ctx);
 
 void inverted_index_add(Map map, char *word, char *doc);
 void inverted_index_show(void *data, void *ctx);
@@ -57,6 +57,14 @@ int main(int argc, char *argv[]) {
         printf("error: can not open file '%s'.\n", file_input_name);
         exit(1);
     }
+
+    FILE *file_output = fopen(file_output_name, "w");
+
+    if (!file_output) {
+        printf("error: can not open file '%s'.\n", file_output_name);
+        exit(1);
+    }
+
 
     Vector files_train_name = vector_new();
 
@@ -138,10 +146,11 @@ int main(int argc, char *argv[]) {
     }
 
     printf("------ INVERTED INDEX ------\n\n");
-    vector_foreach(inverted_index_vector, inverted_index_show, NULL);
+    vector_foreach(inverted_index_vector, inverted_index_show, file_output);
     printf("\n");
     printf("------ FORWARD INDEX ------\n\n");
-    vector_foreach(forward_index_vector, forward_index_show, NULL);
+    //vector_foreach(forward_index_vector, forward_index_show, NULL);
+    fclose(file_output);
 
     map_destroy(inverted_index_map, free, inverted_index_destroy);
     map_destroy(forward_index_map, free, forward_index_destroy);
@@ -159,9 +168,9 @@ Index *index_new(int freq, double tf_idf) {
     return di;
 }
 
-void index_show(Index *di) {
-    printf("freq: %d\n", di->freq);
-    printf("tf-idf: %.2lf", di->tf_idf);
+void index_show(Index *di, void *ctx) {
+    fprintf((FILE*)ctx,"freq: %d\n", di->freq);
+    fprintf((FILE*)ctx,"tf-idf: %.2lf", di->tf_idf);
 }
 
 void inverted_index_add(Map map, char *word, char *doc) {
@@ -193,12 +202,13 @@ void inverted_index_show(void *data, void *ctx) {
     void fn(void *data, void *ctx) {
         char *k = pair_first((Pair)data);
         Index *di = pair_second((Pair)data);
-        printf("document: %s\n", k);
-        index_show(di);
-        printf("\n\n");
+        fprintf((FILE*)ctx ,"document: %s\n", k); // index
+        index_show(di, ctx); //freq tf-idf
+        fprintf((FILE*)ctx, "\n\n"); 
     }
-    printf("# %s\n", key);
-    map_foreach(value, fn, NULL);
+    fprintf((FILE*)ctx,"# %s\n", key); // name
+    // qtdd de arquivos que essa palavra contem
+    map_foreach(value, fn, ctx);
     printf("\n");
 }
 
@@ -235,7 +245,7 @@ void forward_index_show(void *data, void *ctx) {
         char *k = pair_first(p);
         Index *di = pair_second(p);
         printf("word: %s\n", k);
-        index_show(di);
+        index_show(di,ctx);
         printf("\n\n");
     }
     map_foreach(value, fn, NULL);
