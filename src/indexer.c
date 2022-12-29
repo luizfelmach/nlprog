@@ -27,7 +27,7 @@ void forward_index_destroy(void *data);
 
 void map_to_vector(void *data, void *ctx);
 
-void populate(Vector words_vector, Map map);
+void populate(Vector files_train_name, Map map);
 
 double tf(Map forward_index, char *doc, int word_index);
 double df(Map inverted_index, char *word);
@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     char file_input_name[2048];
     char file_output_name[2048];
 
+    // Build files name of input and output
     sprintf(file_input_name, "%s/train.txt", argv[1]);
     sprintf(file_output_name, "%s/%s", argv[1], argv[2]);
 
@@ -60,17 +61,16 @@ int main(int argc, char *argv[]) {
 
     Vector files_train_name = vector_new();
 
+    // Get all files name in folder /train
     while (1) {
         char *file_train_name = malloc(sizeof(char) * 1024);
-        char *temp = malloc(sizeof(char) * 1024);
+        char temp[1024];
         if (fscanf(file_input, "%s %*s", temp) < 1) {
-            free(temp);
             free(file_train_name);
             break;
         }
         sprintf(file_train_name, "%s/%s", argv[1], temp);
         vector_push(files_train_name, file_train_name);
-        free(temp);
     }
 
     total_docs = vector_size(files_train_name);
