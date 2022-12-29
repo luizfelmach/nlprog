@@ -27,7 +27,7 @@ void forward_index_destroy(void *data);
 
 void map_to_vector(void *data, void *ctx);
 
-void populate(Vector files_train_name, Map map);
+void get_words(Vector files_train_name, Map map);
 
 double tf(Map forward_index, char *doc, int word_index);
 double df(Map inverted_index, char *word);
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     // vector<pair<string, map<pair<string, int>>>>
     Vector forward_index_vector = vector_new();
 
-    populate(files_train_name, inverted_index_map);
+    get_words(files_train_name, inverted_index_map);
     vector_destroy(files_train_name, free);
 
     map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
@@ -251,7 +251,7 @@ void forward_index_destroy(void *data) {
     map_destroy(data, free, free);
 }
 
-void populate(Vector files_train_name, Map map) {
+void get_words(Vector files_train_name, Map map) {
     int i;
     for (i = 0; i < vector_size(files_train_name); i++) {
         char *file_train_name = vector_at(files_train_name, i);
