@@ -96,14 +96,14 @@ int main(int argc, char *argv[]) {
     int size = vector_size(files_train_class);
     int len = strlen((char *)vector_at(files_train_class, 0)) + 1;
 
-    fwrite(&size, 1, sizeof(int), file_output);  // vector size
+    /*fwrite(&size, 1, sizeof(int), file_output);  // vector size
 
     // writing document classes
     for (i = 0; i < vector_size(files_train_class); i++) {
         char *class_temp = vector_at(files_train_class, i);
         fwrite(class_temp, len, sizeof(char), file_output);
         // printf("%s\n", class_temp);
-    }
+    }*/
 
     // map<pair<string, map<pair<string, Document_Index>>>>
     Map inverted_index_map = map_new();
@@ -171,11 +171,12 @@ int main(int argc, char *argv[]) {
     vector_foreach(inverted_index_vector, inverted_index_write, file_output);
     printf("\n");
 
-    printf("------ WRITING FORWARD INDEX ------\n\n");
+    /*printf("------ WRITING FORWARD INDEX ------\n\n");
     size = vector_size(forward_index_vector);
     fwrite(&size, 1, sizeof(int), file_output);  // size vector
     vector_foreach(forward_index_vector, forward_index_show, file_output);
     vector_foreach(forward_index_vector, forward_index_write, file_output);
+    */
     fclose(file_output);
 
     map_destroy(inverted_index_map, free, inverted_index_destroy);
