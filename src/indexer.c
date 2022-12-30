@@ -171,12 +171,12 @@ int main(int argc, char *argv[]) {
     vector_foreach(inverted_index_vector, inverted_index_write, file_output);
     printf("\n");
 
-    /*printf("------ WRITING FORWARD INDEX ------\n\n");
+    printf("------ WRITING FORWARD INDEX ------\n\n");
     size = vector_size(forward_index_vector);
     fwrite(&size, 1, sizeof(int), file_output);  // size vector
     vector_foreach(forward_index_vector, forward_index_show, file_output);
     vector_foreach(forward_index_vector, forward_index_write, file_output);
-    */
+    
     fclose(file_output);
 
     map_destroy(inverted_index_map, free, inverted_index_destroy);
@@ -246,6 +246,7 @@ void inverted_index_write(void *data, void *ctx) {
     char *key = pair_first(p);
     int len = strlen(key) + 1;  // size name
     Map value = pair_second(p);
+    int size = map_size(value);
     void fn(void *data, void *ctx) {
         int k = atoi(pair_first((Pair)data));
         Index *di = pair_second((Pair)data);
@@ -255,8 +256,7 @@ void inverted_index_write(void *data, void *ctx) {
     fwrite(&len, 1, sizeof(int), (FILE *)ctx);    // size name
     fwrite(key, len, sizeof(char), (FILE *)ctx);  // name
 
-    len = map_size(value);
-    fwrite(&len, 1, sizeof(int), (FILE *)ctx);  // size Index
+    fwrite(&size, 1, sizeof(int), (FILE *)ctx);  // size Index
 
     map_foreach(value, fn, ctx);
 }
@@ -303,11 +303,11 @@ void forward_index_show(void *data, void *ctx) {
 
 void forward_index_write(void *data, void *ctx) {
     Pair p = data;
-    int key = atoi(pair_first(p));
+    char *key = pair_first(p);
+    int len = strlen(key) + 1;
     Map value = pair_second(p);
     int size = map_size(value);
 
-    fwrite(&key, 1, sizeof(int), (FILE *)ctx);
     void fn(void *data, void *ctx) {
         Pair p = data;
         int k = atoi(pair_first(p));
@@ -315,6 +315,10 @@ void forward_index_write(void *data, void *ctx) {
         fwrite(&k, 1, sizeof(int), (FILE *)ctx);  // word index
         index_write(di, ctx);
     }
+
+    fwrite(&len, 1, sizeof(int), (FILE *)ctx);    // size idx doc
+    fwrite(key, len, sizeof(char), (FILE *)ctx);  // idx doc
+
     // tamanho do banco de ṕalavras
     fwrite(&size, 1, sizeof(int), (FILE *)ctx);
     map_foreach(value, fn, ctx);
