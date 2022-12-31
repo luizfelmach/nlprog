@@ -81,10 +81,10 @@ void inverted_index_show(Inverted_Index ii) {
         map_foreach(value,
                     call(void, (void *data, void *ctx),
                          {
-                             char *key = (char *)pair_first((Pair)data);
-                             Index value = (Index)pair_second((Pair)data);
-                             printf("# %s\n", key);
-                             index_show(value);
+                             char *k = (char *)pair_first((Pair)data);
+                             Index v = (Index)pair_second((Pair)data);
+                             printf("# %s\n", k);
+                             index_show(v);
                          }),
                     NULL);
         printf("\n");
