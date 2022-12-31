@@ -11,6 +11,6 @@ void vec_show_char(void *data, void *ctx);
 
 // Callback Creator
 
-#define call(return_type, body) ({ return_type _fn body _fn; })
+#define call(return_type, args, body) ({ return_type _fn args body _fn; })
 
 #endif  // ALGO_H

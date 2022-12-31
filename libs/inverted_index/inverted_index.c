@@ -1,3 +1,4 @@
+#include <algo.h>
 #include <inverted_index.h>
 #include <map.h>
 #include <pair.h>
@@ -71,19 +72,21 @@ void inverted_index_add(Inverted_Index ii, char *word, int doc) {
 
 void inverted_index_show(Inverted_Index ii) {
     printf("~~~ Inverted Index ~~~\n\n");
-    void fn(void *data, void *ctx) {
-        char *key = (char *)pair_first((Pair)data);
-        Index value = (Index)pair_second((Pair)data);
-        printf("# %s\n", key);
-        index_show(value);
-    }
     int i;
     for (i = 0; i < vector_size(ii->data_vector); i++) {
         Pair p = (Pair)vector_at(ii->data_vector, i);
         char *key = (char *)pair_first(p);
         Map value = (Map)pair_second(p);
         printf("%s\n", key);
-        map_foreach(value, fn, NULL);
+        map_foreach(value,
+                    call(void, (void *data, void *ctx),
+                         {
+                             char *key = (char *)pair_first((Pair)data);
+                             Index value = (Index)pair_second((Pair)data);
+                             printf("# %s\n", key);
+                             index_show(value);
+                         }),
+                    NULL);
         printf("\n");
     }
 }
@@ -92,10 +95,9 @@ void inverted_index_write(Inverted_Index ii, FILE *file) {
 }
 
 void inverted_index_destroy(Inverted_Index ii) {
-    void destroy(void *data) {
-        map_destroy((Map)data, free, free);
-    }
-    map_destroy(ii->data_map, free, destroy);
+    map_destroy(ii->data_map, free, call(void, (void *data), {
+                    map_destroy((Map)data, free, free);
+                }));
     vector_destroy(ii->data_vector, do_nothing);
     free(ii);
 }
