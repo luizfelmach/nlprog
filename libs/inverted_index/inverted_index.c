@@ -72,21 +72,19 @@ void inverted_index_add(Inverted_Index ii, char *word, int doc) {
 
 void inverted_index_show(Inverted_Index ii) {
     printf("~~~ Inverted Index ~~~\n\n");
+    data_fn fn = call(void, (void *data, void *ctx), {
+        char *k = (char *)pair_first((Pair)data);
+        Index v = (Index)pair_second((Pair)data);
+        printf("# %s\n", k);
+        index_show(v);
+    });
     int i;
     for (i = 0; i < vector_size(ii->data_vector); i++) {
         Pair p = (Pair)vector_at(ii->data_vector, i);
         char *key = (char *)pair_first(p);
         Map value = (Map)pair_second(p);
         printf("%s\n", key);
-        map_foreach(value,
-                    call(void, (void *data, void *ctx),
-                         {
-                             char *k = (char *)pair_first((Pair)data);
-                             Index v = (Index)pair_second((Pair)data);
-                             printf("# %s\n", k);
-                             index_show(v);
-                         }),
-                    NULL);
+        map_foreach(value, fn, NULL);
         printf("\n");
     }
 }
