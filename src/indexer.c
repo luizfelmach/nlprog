@@ -61,8 +61,6 @@ int main(int argc, char *argv[]) {
 
     get_forward(forward, inverted, class_docs);
 
-    index_show(forward);
-
     vector_destroy(class_docs, free);
 
     index_destroy(inverted);
