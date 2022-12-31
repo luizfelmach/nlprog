@@ -36,6 +36,14 @@ void index_item_show(Index_Item di) {
     printf("tf-idf: %.2lf\n", di->tf_idf);
 }
 
+Pair index_vector_at(Index ii, int index) {
+    return (Pair)vector_at(ii->data_vector, index);
+}
+
+Pair index_map_get(Index ii, char *key) {
+    return map_get(ii->data_map, key);
+}
+
 void index_item_write(Index_Item di, FILE *file) {
     fwrite(di, 1, sizeof(struct _index_item), file);
 }
