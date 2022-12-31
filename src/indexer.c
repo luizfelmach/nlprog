@@ -88,27 +88,25 @@ void get_inverted(Index inverted, Vector path_docs) {
 }
 
 void get_forward(Index forward, Index inverted, Vector class_docs) {
-    data_fn fn = call(void, (void *data, void *ctx), {
-        char *doc = (char *)pair_first((Pair)data);
-        Index_Item di = (Index_Item)pair_second((Pair)data);
-        int word_index_int = *(int *)ctx;
-        char *class = (char *)vector_at(class_docs, atoi(doc));
-
-        char word_index[2048];
-
-        sprintf(doc, "%s-%s", doc, class);
-        sprintf(word_index, "%d", word_index_int);
-
-        int i;
-        for (i = 0; i < index_item_freq(di); i++) {
-            index_add(forward, doc, word_index);
-        }
-    });
     int i, j;
     for (i = 0; i < index_size(inverted); i++) {
         Pair p = index_vector_at(inverted, i);
         Map docs = (Map)pair_second(p);
-        map_foreach(docs, fn, &i);
+        for (j = 0; j < map_size(docs); j++) {
+            char *doc = (char *)pair_first(map_at(docs, j));
+            Index_Item di = (Index_Item)pair_second(map_at(docs, j));
+            char *class = (char *)vector_at(class_docs, atoi(doc));
+            char word_index[2048];
+            char doc_key[2048];
+
+            sprintf(doc_key, "%s-%s", doc, class);
+            sprintf(word_index, "%d", i);
+
+            int k;
+            for (k = 0; k < index_item_freq(di); k++) {
+                index_add(forward, doc_key, word_index);
+            }
+        }
     }
 }
 
