@@ -1,4 +1,10 @@
-#include <map.h>
+#include <stdio.h>
+
+int main() {
+    return 0;
+}
+
+/* #include <map.h>
 #include <math.h>
 #include <primitive.h>
 #include <stdio.h>
@@ -103,87 +109,82 @@ int main(int argc, char *argv[]) {
         char *class_temp = vector_at(files_train_class, i);
         fwrite(class_temp, len, sizeof(char), file_output);
         // printf("%s\n", class_temp);
-    }*/
-
-    // map<pair<string, map<pair<string, Document_Index>>>>
-    Map inverted_index_map = map_new();
-    // map<pair<string, map<pair<string, int>>>>
-    Map forward_index_map = map_new();
-    // vector<pair<string, map<string, Index>>>
-    Vector inverted_index_vector = vector_new();
-    // vector<pair<string, map<pair<string, int>>>>
-    Vector forward_index_vector = vector_new();
-
-    get_words(files_train_name, inverted_index_map);
-    vector_destroy(files_train_name, free);
-    vector_destroy(files_train_class, free);
-
-    map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
-    vector_sort(inverted_index_vector, inverted_index_sort);
-
-    // Generate forward index
-    for (i = 0; i < vector_size(inverted_index_vector); i++) {
-        Pair p = (Pair)vector_at(inverted_index_vector, i);
-        void fn(void *data, void *ctx) {
-            Pair p = (Pair)data;
-            char *key = (char *)pair_first(p);
-            Index *value = pair_second(p);
-            forward_index_add(forward_index_map, key, i, value);
-        }
-        map_foreach((Map)pair_second(p), fn, NULL);
     }
 
-    map_foreach(forward_index_map, map_to_vector, forward_index_vector);
+Map inverted_index_map = map_new();
+Map forward_index_map = map_new();
+Vector inverted_index_vector = vector_new();
+Vector forward_index_vector = vector_new();
 
-    // Generate tf-idf
-    for (i = 0; i < vector_size(inverted_index_vector); i++) {
-        Pair p = (Pair)vector_at(inverted_index_vector, i);
+get_words(files_train_name, inverted_index_map);
+vector_destroy(files_train_name, free);
+vector_destroy(files_train_class, free);
+
+map_foreach(inverted_index_map, map_to_vector, inverted_index_vector);
+vector_sort(inverted_index_vector, inverted_index_sort);
+
+// Generate forward index
+for (i = 0; i < vector_size(inverted_index_vector); i++) {
+    Pair p = (Pair)vector_at(inverted_index_vector, i);
+    void fn(void *data, void *ctx) {
+        Pair p = (Pair)data;
         char *key = (char *)pair_first(p);
-        void fn(void *data, void *ctx) {
-            Pair k = data;
-            Index *di = pair_second(k);
-            di->tf_idf = tf_idf(forward_index_map, inverted_index_map,
-                                total_docs, (char *)pair_first(k), key, i);
-        }
-        map_foreach((Map)pair_second(p), fn, NULL);
+        Index *value = pair_second(p);
+        forward_index_add(forward_index_map, key, i, value);
     }
+    map_foreach((Map)pair_second(p), fn, NULL);
+}
 
-    // Generate tf-idf
-    for (i = 0; i < vector_size(forward_index_vector); i++) {
-        Pair p = (Pair)vector_at(forward_index_vector, i);
-        char *key = (char *)pair_first(p);
-        void fn(void *data, void *ctx) {
-            Pair k = data;
-            char *word_index = pair_first(k);
-            Pair po = vector_at(inverted_index_vector, atoi(word_index));
-            Index *di = pair_second(k);
-            di->tf_idf =
-                tf_idf(forward_index_map, inverted_index_map, total_docs, key,
-                       (char *)pair_first(po), atoi(word_index));
-        }
-        map_foreach((Map)pair_second(p), fn, NULL);
+map_foreach(forward_index_map, map_to_vector, forward_index_vector);
+
+// Generate tf-idf
+for (i = 0; i < vector_size(inverted_index_vector); i++) {
+    Pair p = (Pair)vector_at(inverted_index_vector, i);
+    char *key = (char *)pair_first(p);
+    void fn(void *data, void *ctx) {
+        Pair k = data;
+        Index *di = pair_second(k);
+        di->tf_idf = tf_idf(forward_index_map, inverted_index_map, total_docs,
+                            (char *)pair_first(k), key, i);
     }
+    map_foreach((Map)pair_second(p), fn, NULL);
+}
 
-    printf("------ WRITING INVERTED INDEX ------\n\n");
-    size = vector_size(inverted_index_vector);
-    fwrite(&size, 1, sizeof(int), file_output);  // size vector
-    vector_foreach(inverted_index_vector, inverted_index_show, file_output);
-    vector_foreach(inverted_index_vector, inverted_index_write, file_output);
-    printf("\n");
+// Generate tf-idf
+for (i = 0; i < vector_size(forward_index_vector); i++) {
+    Pair p = (Pair)vector_at(forward_index_vector, i);
+    char *key = (char *)pair_first(p);
+    void fn(void *data, void *ctx) {
+        Pair k = data;
+        char *word_index = pair_first(k);
+        Pair po = vector_at(inverted_index_vector, atoi(word_index));
+        Index *di = pair_second(k);
+        di->tf_idf = tf_idf(forward_index_map, inverted_index_map, total_docs,
+                            key, (char *)pair_first(po), atoi(word_index));
+    }
+    map_foreach((Map)pair_second(p), fn, NULL);
+}
 
-    printf("------ WRITING FORWARD INDEX ------\n\n");
-    size = vector_size(forward_index_vector);
-    fwrite(&size, 1, sizeof(int), file_output);  // size vector
-    vector_foreach(forward_index_vector, forward_index_show, file_output);
-    vector_foreach(forward_index_vector, forward_index_write, file_output);
-    
-    fclose(file_output);
+printf("------ WRITING INVERTED INDEX ------\n\n");
+size = vector_size(inverted_index_vector);
+fwrite(&size, 1, sizeof(int), file_output);  // size vector
+vector_foreach(inverted_index_vector, inverted_index_show, file_output);
+vector_foreach(inverted_index_vector, inverted_index_write, file_output);
+printf("\n");
 
-    map_destroy(inverted_index_map, free, inverted_index_destroy);
-    map_destroy(forward_index_map, free, forward_index_destroy);
-    vector_destroy(inverted_index_vector, do_nothing);
-    vector_destroy(forward_index_vector, do_nothing);
-    return 0;
+printf("------ WRITING FORWARD INDEX ------\n\n");
+size = vector_size(forward_index_vector);
+fwrite(&size, 1, sizeof(int), file_output);  // size vector
+vector_foreach(forward_index_vector, forward_index_show, file_output);
+vector_foreach(forward_index_vector, forward_index_write, file_output);
+
+fclose(file_output);
+
+map_destroy(inverted_index_map, free, inverted_index_destroy);
+map_destroy(forward_index_map, free, forward_index_destroy);
+vector_destroy(inverted_index_vector, do_nothing);
+vector_destroy(forward_index_vector, do_nothing);
+return 0;
 }
 
 Index *index_new(int freq, double tf_idf) {
@@ -397,3 +398,4 @@ double tf_idf(Map forward_index, Map inverted_index, int total_docs, char *doc,
     return tf(forward_index, doc, word_index) *
            idf(inverted_index, total_docs, word);
 }
+*/

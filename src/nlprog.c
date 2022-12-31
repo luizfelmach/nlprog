@@ -1,4 +1,10 @@
-#include <map.h>
+#include <stdio.h>
+
+int main() {
+    return 0;
+}
+
+/* #include <map.h>
 #include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +59,7 @@ int main(int argc, char *argv[]) {
     vector_foreach(inverted_index_vector, inverted_index_show, NULL);
     vector_foreach(forward_index_vector, forward_index_show, NULL);
 
-    vector_destroy(inverted_index_vector, pair_destroy_index); 
+    vector_destroy(inverted_index_vector, pair_destroy_index);
     vector_destroy(forward_index_vector, pair_destroy_index);
     return 0;
 }
@@ -142,8 +148,8 @@ void populate_forward_index(Vector v, void *ctx) {
         Pair p = pair_new(new_string(doc), map_new());
 
         int size_index;
-        fread(&size_index, 1, sizeof(int), (FILE *)ctx);  
-    
+        fread(&size_index, 1, sizeof(int), (FILE *)ctx);
+
 
         for (int j = 0; j < size_index; j++) {
             int freq;
@@ -155,7 +161,7 @@ void populate_forward_index(Vector v, void *ctx) {
             fread(&freq, 1, sizeof(int), (FILE *)ctx);  // get frequency
             fread(&tf_idf, 1, sizeof(double), (FILE *)ctx);  // get tf_idf
             sprintf(idx_word, "%d", k);
-            
+
             Map m = pair_second(p);
             map_insert(m, new_string(idx_word), index_new(freq, tf_idf));
         }
@@ -190,4 +196,4 @@ void map_destroy_index(void *data) {
 void pair_destroy_index(void *data) {
     Pair p = (Pair)data;
     pair_destroy(p, free, map_destroy_index);
-}
+} */
