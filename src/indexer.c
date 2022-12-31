@@ -1,7 +1,115 @@
+#include <algo.h>
+#include <index.h>
+#include <map.h>
 #include <stdio.h>
+#include <vector.h>
 
-int main() {
+void get_inverted(Index inverted, Vector path_docs);
+void get_forward(Index forward, Index inverted, Vector class_docs);
+
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        printf("error: missing parameters.\n");
+        exit(1);
+    }
+
+    char filename_input[2048];
+    char filename_output[2048];
+
+    // Build files name of input and output
+    sprintf(filename_input, "%s/train.txt", argv[1]);
+    sprintf(filename_output, "%s/%s", argv[1], argv[2]);
+
+    printf("info: current folder is '%s'.\n", argv[1]);
+    printf("info: path to file input is '%s'.\n", filename_input);
+    printf("info: path to file output is '%s'.\n", filename_output);
+
+    FILE *file_input = fopen(filename_input, "r");
+
+    if (!file_input) {
+        printf("error: can not open file '%s'.\n", filename_input);
+        exit(1);
+    }
+
+    Vector path_docs = vector_new();
+    Vector class_docs = vector_new();
+
+    // Get all path and class docs
+    while (1) {
+        char temp1[1024], temp2[1024];
+        char *path = malloc(sizeof(char) * 1024);
+        char *class = malloc(sizeof(char) * 1024);
+        if (fscanf(file_input, "%s %s%*c", temp1, temp2) < 1) {
+            free(path);
+            free(class);
+            break;
+        }
+        sprintf(path, "%s/%s", argv[1], temp1);
+        sprintf(class, "%s", temp2);
+        vector_push(path_docs, path);
+        vector_push(class_docs, class);
+    }
+    fclose(file_input);
+
+    Index inverted = index_new();
+    Index forward = index_new();
+
+    get_inverted(inverted, path_docs);
+    vector_destroy(path_docs, free);
+
+    // sort inverted index
+
+    get_forward(forward, inverted, class_docs);
+
+    index_show(forward);
+
+    vector_destroy(class_docs, free);
+
+    index_destroy(inverted);
+    index_destroy(forward);
     return 0;
+}
+
+void get_inverted(Index inverted, Vector path_docs) {
+    char word[2048], doc[2048];
+    int i;
+    for (i = 0; i < vector_size(path_docs); i++) {
+        char *path = (char *)vector_at(path_docs, i);
+        FILE *file_doc = fopen(path, "r");
+        while (1) {
+            if (fscanf(file_doc, "%s", word) < 1) {
+                break;
+            }
+            sprintf(doc, "%d", i);
+            index_add(inverted, word, doc);
+        }
+        fclose(file_doc);
+    }
+}
+
+void get_forward(Index forward, Index inverted, Vector class_docs) {
+    data_fn fn = call(void, (void *data, void *ctx), {
+        char *doc = (char *)pair_first((Pair)data);
+        Index_Item di = (Index_Item)pair_second((Pair)data);
+        int word_index_int = *(int *)ctx;
+        char *class = (char *)vector_at(class_docs, atoi(doc));
+
+        char word_index[2048];
+
+        sprintf(doc, "%s-%s", doc, class);
+        sprintf(word_index, "%d", word_index_int);
+
+        int i;
+        for (i = 0; i < index_item_freq(di); i++) {
+            index_add(forward, doc, word_index);
+        }
+    });
+    int i, j;
+    for (i = 0; i < index_size(inverted); i++) {
+        Pair p = index_vector_at(inverted, i);
+        Map docs = (Map)pair_second(p);
+        map_foreach(docs, fn, &i);
+    }
 }
 
 /* #include <map.h>

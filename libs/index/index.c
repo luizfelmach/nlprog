@@ -6,23 +6,34 @@
 #include <stdio.h>
 #include <vector.h>
 
-struct _index {
-    Map data_map;
-    Vector data_vector;
-};
-
 struct _index_item {
     int freq;
     double tf_idf;
 };
 
-typedef struct _index_item *Index_Item;
+struct _index {
+    Map data_map;
+    Vector data_vector;
+};
 
 Index_Item index_item_new(int freq, double tf_idf) {
     Index_Item di = (Index_Item)calloc(1, sizeof(struct _index_item));
     di->freq = freq;
     di->tf_idf = tf_idf;
     return di;
+}
+
+void index_item_set(Index_Item ii, int freq, double tf_idf) {
+    ii->freq = freq;
+    ii->tf_idf = tf_idf;
+}
+
+int index_item_freq(Index_Item ii) {
+    return ii->freq;
+}
+
+double index_item_tfidf(Index_Item ii) {
+    return ii->tf_idf;
 }
 
 Index_Item index_item_load(FILE *file) {
@@ -36,12 +47,12 @@ void index_item_show(Index_Item di) {
     printf("tf-idf: %.2lf\n", di->tf_idf);
 }
 
-Pair index_vector_at(Index ii, int index) {
-    return (Pair)vector_at(ii->data_vector, index);
+Pair index_vector_at(Index index, int pos) {
+    return (Pair)vector_at(index->data_vector, pos);
 }
 
-Pair index_map_get(Index ii, char *key) {
-    return map_get(ii->data_map, key);
+Pair index_map_get(Index index, char *key) {
+    return map_get(index->data_map, key);
 }
 
 void index_item_write(Index_Item di, FILE *file) {
@@ -49,21 +60,21 @@ void index_item_write(Index_Item di, FILE *file) {
 }
 
 Index index_new() {
-    Index ii = (Index)calloc(1, sizeof(struct _index));
-    ii->data_map = map_new();
-    ii->data_vector = vector_new();
-    return ii;
+    Index index = (Index)calloc(1, sizeof(struct _index));
+    index->data_map = map_new();
+    index->data_vector = vector_new();
+    return index;
 }
 
 Index index_load(FILE *file) {
 }
 
-void index_add(Index ii, char *key1, char *key2) {
-    Pair p = map_get(ii->data_map, key1);
+void index_add(Index index, char *key1, char *key2) {
+    Pair p = map_get(index->data_map, key1);
     if (!p) {
-        map_insert(ii->data_map, new_string(key1), map_new());
-        p = map_get(ii->data_map, key1);
-        vector_push(ii->data_vector, p);
+        map_insert(index->data_map, new_string(key1), map_new());
+        p = map_get(index->data_map, key1);
+        vector_push(index->data_vector, p);
     }
     Map value = (Map)pair_second(p);
     Pair k = map_get(value, key2);
@@ -75,7 +86,7 @@ void index_add(Index ii, char *key1, char *key2) {
     di->freq += 1;
 }
 
-void index_show(Index ii) {
+void index_show(Index index) {
     data_fn fn = call(void, (void *data, void *ctx), {
         char *k = (char *)pair_first((Pair)data);
         Index_Item v = (Index_Item)pair_second((Pair)data);
@@ -83,8 +94,8 @@ void index_show(Index ii) {
         index_item_show(v);
     });
     int i;
-    for (i = 0; i < vector_size(ii->data_vector); i++) {
-        Pair p = (Pair)vector_at(ii->data_vector, i);
+    for (i = 0; i < vector_size(index->data_vector); i++) {
+        Pair p = (Pair)vector_at(index->data_vector, i);
         char *key = (char *)pair_first(p);
         Map value = (Map)pair_second(p);
         printf("%s\n", key);
@@ -93,13 +104,17 @@ void index_show(Index ii) {
     }
 }
 
-void index_write(Index ii, FILE *file) {
+int index_size(Index index) {
+    return vector_size(index->data_vector);
 }
 
-void index_destroy(Index ii) {
-    map_destroy(ii->data_map, free, call(void, (void *data), {
+void index_write(Index index, FILE *file) {
+}
+
+void index_destroy(Index index) {
+    map_destroy(index->data_map, free, call(void, (void *data), {
                     map_destroy((Map)data, free, free);
                 }));
-    vector_destroy(ii->data_vector, do_nothing);
-    free(ii);
+    vector_destroy(index->data_vector, do_nothing);
+    free(index);
 }

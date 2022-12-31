@@ -4,15 +4,22 @@
 #include <pair.h>
 #include <stdio.h>
 
+typedef struct _index_item *Index_Item;
+
+void index_item_set(Index_Item ii, int freq, double tf_idf);
+int index_item_freq(Index_Item ii);
+double index_item_tfidf(Index_Item ii);
+
 typedef struct _index *Index;
 
 Index index_new();
 Index index_load(FILE *file);
-void index_add(Index ii, char *key1, char *key2);
-void index_show(Index ii);
-Pair index_vector_at(Index ii, int index);
-Pair index_map_get(Index ii, char *key);
-void index_write(Index ii, FILE *file);
-void index_destroy(Index ii);
+void index_add(Index index, char *key1, char *key2);
+void index_show(Index index);
+int index_size(Index index);
+Pair index_vector_at(Index index, int pos);
+Pair index_map_get(Index index, char *key);
+void index_write(Index index, FILE *file);
+void index_destroy(Index index);
 
 #endif  // INDEX_H
