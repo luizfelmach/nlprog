@@ -9,7 +9,7 @@ typedef void (*data_fn)(void *data, void *ctx);
 typedef struct _map *Map;
 
 Map map_new();
-Pair map_get(Map map, char *key);
+void *map_get(Map map, char *key);
 void map_insert(Map map, char *key, void *data);
 Pair map_at(Map map, int pos);
 int map_size(Map map);

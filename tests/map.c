@@ -17,14 +17,12 @@ int main() {
 
     int i;
     for (i = 0; i < 10; i++) {
-        Pair p = map_get(map, words[i]);
-
+        int *p = map_get(map, words[i]);
         if (!p) {
-            map_insert(map, new_string(words[i]), new_int(1));
-        } else {
-            int *value = (int *)pair_second(p);
-            *value += 1;
+            map_insert(map, new_string(words[i]), new_int(0));
+            p = map_get(map, words[i]);
         }
+        *p += 1;
     }
 
     printf("Total keys: %d\n\n", map_size(map));

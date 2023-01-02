@@ -38,14 +38,20 @@ int map_data_cmp(const void *d1, const void *d2) {
     return strcmp(key_inside, (char *)d2);
 }
 
-Pair map_get(Map map, char *key) {
+void *map_get(Map map, char *key) {
     int index = fn_hash(key);
 
     if (map->data[index] == NULL) {
         return NULL;
     }
 
-    return (Pair)linkedlist_search(map->data[index], key, map_data_cmp);
+    Pair p = (Pair)linkedlist_search(map->data[index], key, map_data_cmp);
+
+    if (!p) {
+        return NULL;
+    }
+
+    return pair_second(p);
 }
 
 void map_insert(Map map, char *key, void *data) {
