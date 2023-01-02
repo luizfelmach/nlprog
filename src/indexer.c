@@ -88,7 +88,7 @@ void get_inverted(Index inverted, Vector path_docs) {
 void get_forward(Index forward, Index inverted, Vector class_docs) {
     int i, j;
     for (i = 0; i < index_size(inverted); i++) {
-        Pair p = index_vector_at(inverted, i);
+        Pair p = index_at(inverted, i);
         Map docs = (Map)pair_second(p);
         for (j = 0; j < map_size(docs); j++) {
             char *doc = (char *)pair_first(map_at(docs, j));

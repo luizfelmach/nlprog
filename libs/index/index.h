@@ -17,8 +17,10 @@ Index index_load(FILE *file);
 void index_add(Index index, char *key1, char *key2);
 void index_show(Index index);
 int index_size(Index index);
-Pair index_vector_at(Index index, int pos);
-Pair index_map_get(Index index, char *key);
+Pair index_at(Index index, int pos);
+Pair index_get(Index index, char *key);
+Index_Item index_at_get(Index index, int pos, char *key);
+Index_Item index_get_get(Index index, char *key1, char *key2);
 void index_write(Index index, FILE *file);
 void index_destroy(Index index);
 

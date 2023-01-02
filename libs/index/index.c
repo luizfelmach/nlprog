@@ -47,12 +47,32 @@ void index_item_show(Index_Item di) {
     printf("tf-idf: %.2lf\n", di->tf_idf);
 }
 
-Pair index_vector_at(Index index, int pos) {
+Pair index_at(Index index, int pos) {
     return (Pair)vector_at(index->data_vector, pos);
 }
 
-Pair index_map_get(Index index, char *key) {
+Pair index_get(Index index, char *key) {
     return map_get(index->data_map, key);
+}
+
+Index_Item index_at_get(Index index, int pos, char *key) {
+    Pair p = (Pair)vector_at(index->data_vector, pos);
+    if (!p) {
+        return NULL;
+    }
+    Map value = (Map)pair_second(p);
+    Pair k = map_get(value, key);
+    return (Index_Item)pair_second(k);
+}
+
+Index_Item index_get_get(Index index, char *key1, char *key2) {
+    Pair p = (Pair)map_get(index->data_map, key1);
+    if (!p) {
+        return NULL;
+    }
+    Map value = (Map)pair_second(p);
+    Pair k = map_get(value, key2);
+    return (Index_Item)pair_second(k);
 }
 
 void index_item_write(Index_Item di, FILE *file) {
