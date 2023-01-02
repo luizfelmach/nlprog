@@ -1,6 +1,7 @@
 #ifndef INDEX_H
 #define INDEX_H
 
+#include <map.h>
 #include <pair.h>
 #include <stdio.h>
 
@@ -18,7 +19,7 @@ void index_add(Index index, char *key1, char *key2);
 void index_show(Index index);
 int index_size(Index index);
 Pair index_at(Index index, int pos);
-Pair index_get(Index index, char *key);
+Map index_get(Index index, char *key);
 Index_Item index_at_get(Index index, int pos, char *key);
 Index_Item index_get_get(Index index, char *key1, char *key2);
 void index_write(Index index, FILE *file);

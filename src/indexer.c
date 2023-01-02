@@ -63,6 +63,8 @@ int main(int argc, char *argv[]) {
 
     vector_destroy(class_docs, free);
 
+    index_show(inverted);
+
     index_destroy(inverted);
     index_destroy(forward);
     return 0;
