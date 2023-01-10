@@ -71,9 +71,9 @@ int main(int argc, char *argv[]) {
     Index forward = index_new();
 
     get_inverted(inverted, path_docs);
+    index_sort(inverted, inverted_sort);
     get_forward(forward, inverted, path_docs, class_docs);
     generate_tfidf(inverted, forward);
-    index_sort(inverted, inverted_sort);
 
     vector_destroy(path_docs, free);
     vector_destroy(class_docs, free);
