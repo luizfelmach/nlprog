@@ -3,6 +3,7 @@
 #include <map.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <vector.h>
 
 int total_docs;
@@ -70,9 +71,9 @@ int main(int argc, char *argv[]) {
     Index forward = index_new();
 
     get_inverted(inverted, path_docs);
-    index_sort(inverted, inverted_sort);
     get_forward(forward, inverted, path_docs, class_docs);
     generate_tfidf(inverted, forward);
+    index_sort(inverted, inverted_sort);
 
     vector_destroy(path_docs, free);
     vector_destroy(class_docs, free);
@@ -148,8 +149,8 @@ void get_forward(Index forward, Index inverted, Vector path_docs,
     int i, j, k;
     for (i = 0; i < vector_size(path_docs); i++) {
         char key[2048];
-        sprintf(key, "%s-%s", vector_at(path_docs, i),
-                vector_at(class_docs, i));
+        sprintf(key, "%s-%s", (char *)vector_at(path_docs, i),
+                (char *)vector_at(class_docs, i));
         index_insert(forward, key);
     }
     for (i = 0; i < index_size(inverted); i++) {
@@ -202,5 +203,7 @@ double calculate_tfidf(int freq_p_in_d, int n_docs_p_appeared) {
 }
 
 int inverted_sort(const void *d1, const void *d2) {
-    // Todo
+    const Pair *p1 = d1;
+    const Pair *p2 = d2;
+    return strcmp((char *)pair_first(*p1), (char *)pair_first(*p2));
 }

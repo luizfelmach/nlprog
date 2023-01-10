@@ -59,7 +59,7 @@ Pair index_at(Index index, int pos) {
 }
 
 void index_sort(Index index, data_cmp cmp) {
-    // Todo
+    map_sort(index->data_map, cmp);
 }
 
 Index_Item index_get_at(Index index, char *key, int pos) {

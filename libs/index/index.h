@@ -5,8 +5,6 @@
 #include <pair.h>
 #include <stdio.h>
 
-typedef int (*data_cmp)(const void *data1, const void *data2);
-
 typedef struct _index_item *Index_Item;
 
 void index_item_set(Index_Item ii, int freq, double tf_idf);

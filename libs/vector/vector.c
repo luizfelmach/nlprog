@@ -58,7 +58,9 @@ int vector_size(Vector vector) {
 void vector_destroy(Vector vector, data_destroy destroy) {
     int i;
     for (i = 0; i < vector->last; i++) {
-        destroy(vector->data[i]);
+        if(vector->data[i]!=NULL){
+            destroy(vector->data[i]);
+        }
     }
     free(vector->data);
     free(vector);

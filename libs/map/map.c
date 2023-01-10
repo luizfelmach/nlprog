@@ -68,6 +68,10 @@ void map_insert(Map map, char *key, void *data) {
     map->size += 1;
 }
 
+void map_sort(Map map, data_cmp cmp) {
+    vector_sort(map->data_vector, cmp);
+}
+
 void map_foreach(Map map, data_fn fn, void *ctx) {
     int i;
     for (i = 0; i < MAX; i++) {
