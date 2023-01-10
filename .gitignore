@@ -1,5 +1,6 @@
 bin/
 build/
+datasets/
 .vscode/
 experimental
 indexer

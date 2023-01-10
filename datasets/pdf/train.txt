@@ -1,2 +1,0 @@
-train/123.txt esp
-train/456.txt pol
