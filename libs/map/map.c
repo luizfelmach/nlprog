@@ -1,19 +1,23 @@
 #include <linkedlist.h>
 #include <map.h>
+#include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector.h>
 
 const static int MAX = 12289;  // Good prime number for hash tables
 
 struct _map {
     Linkedlist *data;
+    Vector data_vector;
     int capacity, size;
 };
 
 Map map_new() {
     Map map = (Map)calloc(1, sizeof(struct _map));
     map->capacity = MAX;
+    map->data_vector = vector_new();
     map->data = (Linkedlist *)calloc(map->capacity, sizeof(Linkedlist));
     return map;
 }
@@ -34,14 +38,20 @@ int map_data_cmp(const void *d1, const void *d2) {
     return strcmp(key_inside, (char *)d2);
 }
 
-Pair map_get(Map map, char *key) {
+void *map_get(Map map, char *key) {
     int index = fn_hash(key);
 
     if (map->data[index] == NULL) {
         return NULL;
     }
 
-    return (Pair)linkedlist_search(map->data[index], key, map_data_cmp);
+    Pair p = (Pair)linkedlist_search(map->data[index], key, map_data_cmp);
+
+    if (!p) {
+        return NULL;
+    }
+
+    return pair_second(p);
 }
 
 void map_insert(Map map, char *key, void *data) {
@@ -54,6 +64,7 @@ void map_insert(Map map, char *key, void *data) {
     Pair p = pair_new(key, data);
 
     linkedlist_add(map->data[index], p);
+    vector_push(map->data_vector, p);
     map->size += 1;
 }
 
@@ -70,6 +81,10 @@ int map_size(Map map) {
     return map->size;
 }
 
+Pair map_at(Map map, int pos) {
+    return (Pair)vector_at(map->data_vector, pos);
+}
+
 void map_destroy(Map map, data_destroy destroy_key,
                  data_destroy destroy_value) {
     void destroy_all(void *data) {
@@ -83,6 +98,7 @@ void map_destroy(Map map, data_destroy destroy_key,
             linkedlist_destroy(map->data[i], destroy_all);
         }
     }
+    vector_destroy(map->data_vector, do_nothing);
     free(map->data);
     free(map);
 }
