@@ -15,4 +15,11 @@ fi
 
 wget $URL
 unzip $FILENAME
+
+if [[ $? == 0 ]] ; then
+    echo "Success"
+else
+    echo "Please, try download again."
+fi ;
+
 rm -rf $FILENAME
