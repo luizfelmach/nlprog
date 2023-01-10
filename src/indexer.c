@@ -78,10 +78,13 @@ int main(int argc, char *argv[]) {
     vector_destroy(path_docs, free);
     vector_destroy(class_docs, free);
 
-    printf("\n-------------- inverted --------------\n\n");
-    index_show(inverted);
-    printf("\n-------------- forward --------------\n\n");
-    index_show(forward);
+    // run to show: INDEX_SHOW= ./indexer ...
+    if (getenv("INDEX_SHOW")) {
+        printf("\n-------------- inverted --------------\n\n");
+        index_show(inverted);
+        printf("\n-------------- forward --------------\n\n");
+        index_show(forward);
+    }
 
     printf("info: %d words.\n", index_size(inverted));
     printf("info: %d docs.\n", index_size(forward));
