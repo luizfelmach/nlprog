@@ -7,6 +7,7 @@
 
 int total_docs;
 
+int ensure_exists_paths(Vector path_docs);
 void get_inverted(Index inverted, Vector path_docs);
 void get_forward(Index forward, Index inverted, Vector path_docs,
                  Vector class_docs);
@@ -56,6 +57,13 @@ int main(int argc, char *argv[]) {
     }
     fclose(file_input);
 
+    if (!ensure_exists_paths(path_docs)) {
+        printf("error: missing files in '/train'.\n");
+        vector_destroy(path_docs, free);
+        vector_destroy(class_docs, free);
+        exit(1);
+    }
+
     total_docs = vector_size(path_docs);
 
     Index inverted = index_new();
@@ -90,6 +98,22 @@ int main(int argc, char *argv[]) {
     index_destroy(inverted);
     index_destroy(forward);
     return 0;
+}
+
+int ensure_exists_paths(Vector path_docs) {
+    int result = 1;
+    FILE *file;
+    char *path;
+    int i;
+    for (i = 0; i < vector_size(path_docs); i++) {
+        path = vector_at(path_docs, i);
+        file = fopen(path, "r");
+        if (!file) {
+            printf("warn: file '%s' does not exists.\n", path);
+            result = 0;
+        }
+    }
+    return result;
 }
 
 void get_inverted(Index inverted, Vector path_docs) {
