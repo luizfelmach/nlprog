@@ -27,6 +27,14 @@ void index_item_set(Index_Item ii, int freq, double tf_idf) {
     ii->tf_idf = tf_idf;
 }
 
+void index_set_freq(Index_Item ii, int freq) {
+    ii->freq = freq;
+}
+
+void index_set_tfidf(Index_Item ii, double tf_idf) {
+    ii->tf_idf = tf_idf;
+}
+
 int index_item_freq(Index_Item ii) {
     return ii->freq;
 }
@@ -42,12 +50,24 @@ Index_Item index_item_load(FILE *file) {
 }
 
 void index_item_show(Index_Item di) {
-    printf("freq: %d    ", di->freq);
+    printf("freq: %d     ", di->freq);
     printf("tf-idf: %.2lf\n", di->tf_idf);
 }
 
 Pair index_at(Index index, int pos) {
     return (Pair)map_at(index->data_map, pos);
+}
+
+void index_sort(Index index, data_cmp cmp) {
+    // Todo
+}
+
+Index_Item index_get_at(Index index, char *key, int pos) {
+    Map value = map_get(index->data_map, key);
+    if (!value) {
+        return NULL;
+    }
+    return (Index_Item)map_at(value, pos);
 }
 
 Map index_get(Index index, char *key) {
@@ -84,6 +104,7 @@ Index index_new() {
 }
 
 Index index_load(FILE *file) {
+    // Todo
 }
 
 void index_add(Index index, char *key1, char *key2) {
@@ -100,11 +121,18 @@ void index_add(Index index, char *key1, char *key2) {
     di->freq += 1;
 }
 
+void index_insert(Index index, char *key) {
+    Map p = map_get(index->data_map, key);
+    if (!p) {
+        map_insert(index->data_map, new_string(key), map_new());
+    }
+}
+
 void index_show(Index index) {
     data_fn fn = call(void, (void *data, void *ctx), {
         char *k = (char *)pair_first((Pair)data);
         Index_Item v = (Index_Item)pair_second((Pair)data);
-        printf("# %s\n", k);
+        printf("# %s     ", k);
         index_item_show(v);
     });
     int i;
@@ -123,6 +151,7 @@ int index_size(Index index) {
 }
 
 void index_write(Index index, FILE *file) {
+    // Todo
 }
 
 void index_destroy(Index index) {
