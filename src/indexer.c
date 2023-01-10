@@ -82,6 +82,9 @@ int main(int argc, char *argv[]) {
     printf("\n-------------- forward --------------\n\n");
     index_show(forward);
 
+    printf("info: %d words.\n", index_size(inverted));
+    printf("info: %d docs.\n", index_size(forward));
+
     FILE *file_output = fopen(filename_output, "wb");
 
     if (!file_output) {
