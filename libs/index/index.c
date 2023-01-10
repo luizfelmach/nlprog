@@ -4,6 +4,7 @@
 #include <pair.h>
 #include <primitive.h>
 #include <stdio.h>
+#include <string.h>
 #include <vector.h>
 
 struct _index_item {
@@ -50,7 +51,7 @@ Index_Item index_item_load(FILE *file) {
 }
 
 void index_item_show(Index_Item di) {
-    printf("freq: %d     ", di->freq);
+    printf("freq: %d    ", di->freq);
     printf("tf-idf: %.2lf\n", di->tf_idf);
 }
 
@@ -93,18 +94,45 @@ Index_Item index_get_get(Index index, char *key1, char *key2) {
     return k;
 }
 
-void index_item_write(Index_Item di, FILE *file) {
-    fwrite(di, 1, sizeof(struct _index_item), file);
-}
-
 Index index_new() {
     Index index = (Index)calloc(1, sizeof(struct _index));
     index->data_map = map_new();
     return index;
 }
 
+void index_itens_load(Index index, char *key, FILE *file) {
+    int i, size;
+    fread(&size, sizeof(int), 1, file);
+
+    Map map_itens = index_get(index, key);
+
+    for (int i = 0; i < size; i++) {
+        char key_item[2048];
+        int len;
+
+        fread(&len, sizeof(int), 1, file);
+        fread(&key_item, sizeof(char), len, file);
+
+        map_insert(map_itens, new_string(key_item), index_item_load(file));
+    }
+}
+
 Index index_load(FILE *file) {
-    // Todo
+    Index index = index_new();
+    int i, size;
+    fread(&size, sizeof(int), 1, file);
+
+    for (i = 0; i < size; i++) {
+        int len;
+        char key[2048];
+
+        fread(&len, sizeof(int), 1, file);
+        fread(&key, sizeof(char), len, file);
+
+        map_insert(index->data_map, new_string(key), map_new());
+        index_itens_load(index, key, file);
+    }
+    return index;
 }
 
 void index_add(Index index, char *key1, char *key2) {
@@ -150,8 +178,45 @@ int index_size(Index index) {
     return map_size(index->data_map);
 }
 
+void index_item_write(Index_Item di, FILE *file) {
+    fwrite(di, 1, sizeof(struct _index_item), file);
+}
+
+void index_itens_write(Index index, char *key, FILE *file) {
+    int i;
+    Map map_itens = index_get(index, key);
+
+    int size = map_size(map_itens);
+    fwrite(&size, sizeof(int), 1, file);
+
+    for (int i = 0; i < size; i++) {
+        Pair p = map_at(map_itens, i);
+        char *key_item = pair_first(p);
+        int len = strlen(key_item) + 1;
+
+        fwrite(&len, sizeof(int), 1, file);
+        fwrite(key_item, sizeof(char), len, file);
+
+        Index_Item item = map_get(map_itens, key_item);
+        index_item_write(item, file);
+    }
+}
+
 void index_write(Index index, FILE *file) {
-    // Todo
+    int i;
+    int size = index_size(index);
+    fwrite(&size, sizeof(int), 1, file);
+
+    for (i = 0; i < size; i++) {
+        Pair p = index_at(index, i);
+        char *key = pair_first(p);
+        int len = strlen(key) + 1;
+
+        fwrite(&len, sizeof(int), 1, file);
+        fwrite(key, sizeof(char), len, file);
+
+        index_itens_write(index, key, file);
+    }
 }
 
 void index_destroy(Index index) {
