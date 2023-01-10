@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
     index_write(forward, file_output);
 
     printf("info: ending and closing program.\n");
+    fclose(file_output);
     index_destroy(inverted);
     index_destroy(forward);
     return 0;
@@ -112,6 +113,7 @@ int ensure_exists_paths(Vector path_docs) {
             printf("warn: file '%s' does not exists.\n", path);
             result = 0;
         }
+        fclose(file);
     }
     return result;
 }
