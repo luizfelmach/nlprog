@@ -219,9 +219,11 @@ void index_write(Index index, FILE *file) {
     }
 }
 
+
 void index_destroy(Index index) {
     map_destroy(index->data_map, free, call(void, (void *data), {
                     map_destroy((Map)data, free, free);
                 }));
     free(index);
 }
+
