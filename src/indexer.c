@@ -119,6 +119,7 @@ int ensure_exists_paths(Vector path_docs) {
         if (!file) {
             printf("warn: file '%s' does not exists.\n", path);
             result = 0;
+            continue;
         }
         fclose(file);
     }
