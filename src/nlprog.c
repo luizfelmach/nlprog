@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 void show_class(char *siggle);
+void show_document(int index, char *name);
+
 void doc_report(Index forward);
 int crescent_size_doc_cmp(const void *d1, const void *d2);
 int decrescent_size_doc_cmp(const void *d1, const void *d2);
@@ -87,11 +89,7 @@ void show_doc_report(Index index) {
     for (int i = 0; i < index_size(index) && i < 10; i++) {  // show 10º firsts
         Pair p = index_at(index, i);
         Map m = pair_second(p);
-        char *token = (char *)pair_first(p);
-        char *doc = strsep(&token, "-");
-        char *class = strsep(&token, "-");
-        printf("index %d \t doc: %s \t class: ", i, doc);
-        show_class(class);
+        show_document(i, pair_first(p));
         printf(" \t words: %d\n", sum_of_words(m));
     }
 }
@@ -126,11 +124,7 @@ void show_word_report(Index forward, Map values, char *word) {
 
         // finding in forward the name and class of doc
         Pair p2 = index_at(forward, idx);
-        char *token = (char *)pair_first(p2);
-        char *doc = strsep(&token, "-");
-        char *class = strsep(&token, "-");
-        printf("index: %d \t doc: %s \t ", idx, doc);
-        show_class(class);
+        show_document(i, pair_first(p2));
         printf(" \t ");
         index_item_show(ii);
     }
@@ -150,6 +144,15 @@ void words_report(Index inverted, Index forward) {
         map_sort(values, decrescent_word_freq_cmp);
         show_word_report(forward, values, word);
     }
+}
+
+void show_document(int index, char *name) {
+    char token[2048];
+    strcpy(token, name);
+    char *doc = strtok(token, "-");
+    char *class = strtok(NULL, "-");
+    printf("index %d \t doc: %s \t class: ", index, doc);
+    show_class(class);
 }
 
 void show_class(char *siggle) {
