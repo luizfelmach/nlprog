@@ -51,8 +51,7 @@ Index_Item index_item_load(FILE *file) {
 }
 
 void index_item_show(Index_Item di) {
-    printf("freq: %d    ", di->freq);
-    printf("tf-idf: %.2lf\n", di->tf_idf);
+    printf("freq: %d \t tf-idf: %.2lf\n", di->freq, di->tf_idf);
 }
 
 Pair index_at(Index index, int pos) {
