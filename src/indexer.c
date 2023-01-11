@@ -153,7 +153,7 @@ void get_forward(Index forward, Index inverted, Vector path_docs,
     int i, j, k;
     for (i = 0; i < vector_size(path_docs); i++) {
         char key[2048];
-        sprintf(key, "%s-%s", (char *)vector_at(path_docs, i),
+        sprintf(key, "%s,%s", (char *)vector_at(path_docs, i),
                 (char *)vector_at(class_docs, i));
         index_insert(forward, key);
     }
@@ -166,7 +166,7 @@ void get_forward(Index forward, Index inverted, Vector path_docs,
             di = (Index_Item)pair_second(map_at(docs, j));
             class = (char *)vector_at(class_docs, atoi(doc));
             path = (char *)vector_at(path_docs, atoi(doc));
-            sprintf(doc_key, "%s-%s", path, class);
+            sprintf(doc_key, "%s,%s", path, class);
             for (k = 0; k < index_item_freq(di); k++) {
                 index_add(forward, doc_key, word_index);
             }

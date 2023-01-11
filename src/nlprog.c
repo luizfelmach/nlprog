@@ -124,7 +124,7 @@ void show_word_report(Index forward, Map values, char *word) {
 
         // finding in forward the name and class of doc
         Pair p2 = index_at(forward, idx);
-        show_document(i, pair_first(p2));
+        show_document(idx, pair_first(p2));
         printf(" \t ");
         index_item_show(ii);
     }
@@ -147,10 +147,9 @@ void words_report(Index inverted, Index forward) {
 }
 
 void show_document(int index, char *name) {
-    char token[2048];
-    strcpy(token, name);
-    char *doc = strtok(token, "-");
-    char *class = strtok(NULL, "-");
+    char doc[2048];
+    char class[2048];
+    sscanf(name,"%[^,],%s", doc, class);
     printf("index %d \t doc: %s \t class: ", index, doc);
     show_class(class);
 }
@@ -163,7 +162,7 @@ void show_class(char *siggle) {
     } else if (!strcmp(siggle, "bro")) {
         printf("Qual a Bronca?");
     } else if (!strcmp(siggle, "cid")) {
-        printf("Cidade");
+        printf("Cidade  ");
     } else if (!strcmp(siggle, "cit")) {
         printf("Ciencia e Tecnologia");
     } else if (!strcmp(siggle, "con2")) {
@@ -175,9 +174,9 @@ void show_class(char *siggle) {
     } else if (!strcmp(siggle, "esp")) {
         printf("Especial");
     } else if (!strcmp(siggle, "fam")) {
-        printf("Familia");
+        printf("Familia ");
     } else if (!strcmp(siggle, "imo")) {
-        printf("Imoveis");
+        printf("Imoveis ");
     } else if (!strcmp(siggle, "inf")) {
         printf("Informatica");
     } else if (!strcmp(siggle, "int")) {
