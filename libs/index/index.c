@@ -62,6 +62,26 @@ void index_item_write(Index_Item ii, FILE *file) {
 
 // index_map
 
+void index_map_add(Index_Map im, char *key) {
+    Index_Item ii = map_get(im, key);
+    if (!ii) {
+        map_insert(im, new_string(key), index_item_new(0, 0));
+        ii = map_get(im, key);
+    }
+    ii->freq += 1;
+}
+
+void index_map_show(Index_Map im) {
+    int i;
+    for (i = 0; i < map_size(im); i++) {
+        Pair p = map_at(im, i);
+        char *key = pair_first(p);
+        Index_Item ii = pair_second(p);
+        printf("# %s     ", key);
+        index_item_show(ii);
+    }
+}
+
 Index_Map index_map_load(FILE *file) {
     Index_Map im = map_new();
     char key_item[2048];
@@ -87,26 +107,6 @@ void index_map_write(Index_Map im, FILE *file) {
         fwrite(&len, sizeof(int), 1, file);
         fwrite(key_item, sizeof(char), len, file);
         index_item_write(ii, file);
-    }
-}
-
-void index_map_add(Index_Map im, char *key) {
-    Index_Item ii = map_get(im, key);
-    if (!ii) {
-        map_insert(im, new_string(key), index_item_new(0, 0));
-        ii = map_get(im, key);
-    }
-    ii->freq += 1;
-}
-
-void index_map_show(Index_Map im) {
-    int i;
-    for (i = 0; i < map_size(im); i++) {
-        Pair p = map_at(im, i);
-        char *key = pair_first(p);
-        Index_Item ii = pair_second(p);
-        printf("# %s     ", key);
-        index_item_show(ii);
     }
 }
 
