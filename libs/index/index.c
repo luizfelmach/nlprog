@@ -85,15 +85,6 @@ Index_Item index_at_get(Index index, int pos, char *key) {
     return k;
 }
 
-Index_Item index_get_get(Index index, char *key1, char *key2) {
-    Map p = map_get(index->data_map, key1);
-    if (!p) {
-        return NULL;
-    }
-    Index_Item k = map_get(p, key2);
-    return k;
-}
-
 Index index_new() {
     Index index = (Index)calloc(1, sizeof(struct _index));
     index->data_map = map_new();
@@ -219,11 +210,9 @@ void index_write(Index index, FILE *file) {
     }
 }
 
-
 void index_destroy(Index index) {
     map_destroy(index->data_map, free, call(void, (void *data), {
                     map_destroy((Map)data, free, free);
                 }));
     free(index);
 }
-
