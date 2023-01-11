@@ -144,19 +144,25 @@ void get_inverted(Index inverted, Vector path_docs) {
     }
 }
 
+void insert_keys_into_forward(Index forward, Vector path_docs,
+                              Vector class_docs) {
+    char key[2048];
+    int i;
+    for (i = 0; i < vector_size(path_docs); i++) {
+        sprintf(key, "%s,%s", vector_at(path_docs, i),
+                vector_at(class_docs, i));
+        index_insert(forward, key);
+    }
+}
+
 void get_forward(Index forward, Index inverted, Vector path_docs,
                  Vector class_docs) {
     char *doc, *class, *path, word_index[2048], doc_key[2048];
     Pair p;
     Map docs;
     Index_Item di;
+    insert_keys_into_forward(forward, path_docs, class_docs);
     int i, j, k;
-    for (i = 0; i < vector_size(path_docs); i++) {
-        char key[2048];
-        sprintf(key, "%s,%s", (char *)vector_at(path_docs, i),
-                (char *)vector_at(class_docs, i));
-        index_insert(forward, key);
-    }
     for (i = 0; i < index_size(inverted); i++) {
         p = index_at(inverted, i);
         docs = (Map)pair_second(p);
