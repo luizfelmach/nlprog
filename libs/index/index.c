@@ -62,13 +62,13 @@ void index_item_write(Index_Item ii, FILE *file) {
 
 // index_map
 
-void index_map_add(Index_Map im, char *key) {
+void index_map_add(Index_Map im, char *key, int value) {
     Index_Item ii = map_get(im, key);
     if (!ii) {
         map_insert(im, new_string(key), index_item_new(0, 0));
         ii = map_get(im, key);
     }
-    ii->freq += 1;
+    ii->freq += value;
 }
 
 void index_map_show(Index_Map im) {
@@ -118,13 +118,13 @@ Index index_new() {
     return index;
 }
 
-void index_add(Index index, char *key1, char *key2) {
+void index_add(Index index, char *key1, char *key2, int value) {
     Index_Map im = map_get(index->data, key1);
     if (!im) {
         map_insert(index->data, new_string(key1), map_new());
         im = map_get(index->data, key1);
     }
-    index_map_add(im, key2);
+    index_map_add(im, key2, value);
 }
 
 void index_insert(Index index, char *key) {

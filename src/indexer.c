@@ -138,7 +138,7 @@ void get_inverted(Index inverted, Vector path_docs) {
                 break;
             }
             sprintf(doc, "%d", i);
-            index_add(inverted, word, doc);
+            index_add(inverted, word, doc, 1);
         }
         fclose(file_doc);
     }
@@ -173,9 +173,7 @@ void get_forward(Index forward, Index inverted, Vector path_docs,
             class = (char *)vector_at(class_docs, atoi(doc));
             path = (char *)vector_at(path_docs, atoi(doc));
             sprintf(doc_key, "%s,%s", path, class);
-            index_add(forward, doc_key, word_index);
-            di2 = index_get_get(forward, doc_key, word_index);
-            index_set_freq(di2, index_item_freq(di));
+            index_add(forward, doc_key, word_index, index_item_freq(di));
         }
     }
 }

@@ -23,7 +23,7 @@ void index_item_show(Index_Item ii);
 
 // index_map
 
-void index_map_add(Index_Map im, char *key);
+void index_map_add(Index_Map im, char *key, int value);
 void index_map_show(Index_Map im);
 // Index_Map index_map_load(FILE *file); // Private
 // void index_map_write(Index_Map im, FILE *file); // Private
@@ -32,7 +32,7 @@ void index_map_show(Index_Map im);
 
 Index index_new();
 
-void index_add(Index index, char *key1, char *key2);
+void index_add(Index index, char *key1, char *key2, int value);
 void index_insert(Index index, char *key);
 void index_sort(Index index, data_cmp cmp);
 void index_show(Index index);
