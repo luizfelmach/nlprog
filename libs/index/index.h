@@ -42,6 +42,7 @@ Pair index_at(Index index, int pos);
 Index_Map index_get(Index index, char *key);
 Pair index_get_at(Index index, char *key, int pos);
 Index_Item index_at_get(Index index, int pos, char *key);
+Index_Item index_get_get(Index index, char *key1, char *key2);
 
 Index index_load(FILE *file);
 void index_write(Index index, FILE *file);

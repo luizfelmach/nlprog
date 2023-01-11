@@ -163,7 +163,7 @@ Index_Map index_get(Index index, char *key) {
 }
 
 Pair index_get_at(Index index, char *key, int pos) {
-    Map value = map_get(index->data, key);
+    Index_Map value = map_get(index->data, key);
     if (!value) {
         return NULL;
     }
@@ -177,6 +177,14 @@ Index_Item index_at_get(Index index, int pos, char *key) {
     }
     Index_Map im = pair_second(p);
     return map_get(im, key);
+}
+
+Index_Item index_get_get(Index index, char *key1, char *key2) {
+    Index_Map im = map_get(index->data, key1);
+    if (!im) {
+        return NULL;
+    }
+    return map_get(im, key2);
 }
 
 Index index_load(FILE *file) {
