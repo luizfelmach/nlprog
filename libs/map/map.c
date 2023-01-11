@@ -6,7 +6,7 @@
 #include <string.h>
 #include <vector.h>
 
-const static int MAX = 12289;  // Good prime number for hash tables
+const static int MAX = 24593;  // Good prime number for hash tables
 
 struct _map {
     Linkedlist *data;
