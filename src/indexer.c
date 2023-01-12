@@ -143,8 +143,8 @@ void insert_keys_into_forward(Index forward, Vector path_docs,
     char key[2048];
     int i;
     for (i = 0; i < vector_size(path_docs); i++) {
-        sprintf(key, "%s,%s", (char*)vector_at(path_docs, i),
-                (char*)vector_at(class_docs, i));
+        sprintf(key, "%s,%s", (char *)vector_at(path_docs, i),
+                (char *)vector_at(class_docs, i));
         index_insert(forward, key);
     }
 }
@@ -152,20 +152,15 @@ void insert_keys_into_forward(Index forward, Vector path_docs,
 void get_forward(Index forward, Index inverted, Vector path_docs,
                  Vector class_docs) {
     char *doc, *class, *path, word_index[2048], doc_key[2048];
-    Pair p;
-    Map docs;
-    Index_Item di, di2;
+    Index_Map docs;
+    Index_Item di;
     insert_keys_into_forward(forward, path_docs, class_docs);
-    int i, j, k;
-    for (i = 0; i < index_size(inverted); i++) {
-        p = index_at(inverted, i);
-        docs = (Map)pair_second(p);
-        sprintf(word_index, "%d", i);
-        for (j = 0; j < map_size(docs); j++) {
-            doc = (char *)pair_first(map_at(docs, j));
-            di = (Index_Item)pair_second(map_at(docs, j));
-            class = (char *)vector_at(class_docs, atoi(doc));
-            path = (char *)vector_at(path_docs, atoi(doc));
+    void *_;
+    index_for(_, docs, inverted) {
+        sprintf(word_index, "%d", __i);
+        map_for(doc, di, docs) {
+            class = vector_at(class_docs, atoi(doc));
+            path = vector_at(path_docs, atoi(doc));
             sprintf(doc_key, "%s,%s", path, class);
             index_add(forward, doc_key, word_index, index_item_freq(di));
         }
@@ -174,20 +169,15 @@ void get_forward(Index forward, Index inverted, Vector path_docs,
 
 void generate_tfidf(Index inverted, Index forward) {
     char word_index[2048], *doc_index;
-    Pair p1, p2;
     Index_Item di_inverted, di_forward;
-    Map value;
+    Index_Map value;
     double tfidf;
-    int i, j, len_docs;
-    for (i = 0; i < index_size(inverted); i++) {
-        p1 = index_at(inverted, i);
-        value = pair_second(p1);
-        sprintf(word_index, "%d", i);
+    int len_docs;
+    void *_;
+    index_for(_, value, inverted) {
         len_docs = map_size(value);
-        for (j = 0; j < map_size(value); j++) {
-            p2 = map_at(value, j);
-            doc_index = pair_first(p2);
-            di_inverted = pair_second(p2);
+        sprintf(word_index, "%d", __i);
+        map_for(doc_index, di_inverted, value) {
             di_forward = index_at_get(forward, atoi(doc_index), word_index);
             tfidf = calculate_tfidf(index_item_freq(di_inverted), len_docs);
             index_set_tfidf(di_inverted, tfidf);
