@@ -14,10 +14,16 @@ Pair pair_new(void *first, void *second) {
 }
 
 void *pair_first(Pair pair) {
+    if (!pair) {
+        return NULL;
+    }
     return pair->first;
 }
 
 void *pair_second(Pair pair) {
+    if (!pair) {
+        return NULL;
+    }
     return pair->second;
 }
 
