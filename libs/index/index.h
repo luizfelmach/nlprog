@@ -49,4 +49,10 @@ void index_write(Index index, FILE *file);
 
 void index_destroy(Index index);
 
+// sort
+int decrescent_double_sort(const void *d1, const void *d2);
+int decrescent_int_sort(const void *d1, const void *d2);
+int crescent_int_sort(const void *d1, const void *d2);
+int decrescent_item_freq_sort(const void *d1, const void *d2);
+int alphabetic_sort(const void *d1, const void *d2);
 #endif  // INDEX_H

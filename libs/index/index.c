@@ -222,3 +222,41 @@ void index_destroy(Index index) {
                 }));
     free(index);
 }
+
+// sort
+
+int decrescent_double_sort(const void *d1, const void *d2) {
+    double *v1 = pair_second(*(const Pair *)d1);
+    double *v2 = pair_second(*(const Pair *)d2);
+    if (*v1 - *v2 < 0) {
+        return 1;
+    } else if (*v1 - *v2 > 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int decrescent_int_sort(const void *d1, const void *d2) {
+    int *f1 = pair_second(*(const Pair *)d1);
+    int *f2 = pair_second(*(const Pair *)d2);
+    return *f2 - *f1;
+}
+
+int crescent_int_sort(const void *d1, const void *d2) {
+    int *f1 = pair_second(*(const Pair *)d1);
+    int *f2 = pair_second(*(const Pair *)d2);
+    return *f1 - *f2;
+}
+
+int decrescent_item_freq_sort(const void *d1, const void *d2) {
+    Index_Item i1 = pair_second(*(const Pair *)d1);
+    Index_Item i2 = pair_second(*(const Pair *)d2);
+
+    return index_item_freq(i2) - index_item_freq(i1);
+}
+
+int alphabetic_sort(const void *d1, const void *d2) {
+    const Pair *p1 = d1;
+    const Pair *p2 = d2;
+    return strcmp((char *)pair_first(*p1), (char *)pair_first(*p2));
+}

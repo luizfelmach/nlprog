@@ -1,12 +1,12 @@
 #include <algo.h>
 #include <index.h>
 #include <map.h>
+#include <math.h>
 #include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector.h>
-#include <math.h>
 
 char *siggles[22] = {"at2", "bro", "cid", "cit", "con2", "eco", "ept",
                      "esp", "fam", "imo", "inf", "int",  "mic", "mul",
@@ -23,20 +23,16 @@ char *classes[22] = {"at2       ",           "Qual a Bronca", "Cidades    ",
 // search engine
 Vector get_words();
 void search_engine(Index inverted, Index forward);
-int decrescent_values_sort(const void *d1, const void *d2);
 void show_search_document(Vector v);
 // classifier
 void classifier(Index inverted, Index forward);
 // word report
 void words_report(Index inverted, Index forward);
-int decrescent_word_freq_cmp(const void *d1, const void *d2);
 void show_word_report(Index forward, Map values, char *word);
 void show_word(int index, char *key, Index_Item ii);
 
 // doc report
 void doc_report(Index index, data_cmp fn);
-int decrescent_size_doc_cmp(const void *d1, const void *d2);
-int crescent_size_doc_cmp(const void *d1, const void *d2);
 void show_document(Vector v);
 
 void show_class(char *siggle);
@@ -74,9 +70,9 @@ int main(int argc, char *argv[]) {
     printf("\n\n#########################################################\n\n");
     printf("\n------------------- DOCUMENTS REPORT --------------------\n\n");
     printf("\n---------------------- decrescent -----------------------\n\n");
-    doc_report(forward_index, decrescent_size_doc_cmp);
+    doc_report(forward_index, decrescent_int_sort);
     printf("\n----------------------- crescent ------------------------\n\n");
-    doc_report(forward_index, crescent_size_doc_cmp);
+    doc_report(forward_index, crescent_int_sort);
     printf("\n\n#########################################################\n\n");
     printf("\n--------------------- WORDS REPORT ----------------------\n\n");
     words_report(inverted_index, forward_index);
@@ -95,14 +91,14 @@ void get_index_text(Index index, Vector text) {
     char *word, doc[2048], *path;
     int i;
     for (i = 0; i < vector_size(text); i++) {
-        word = vector_at(text, i);        
+        word = vector_at(text, i);
         index_add(index, word, "0", 1);
     }
 }
 
 double calculate_tfidf(int freq_p_in_d, int n_docs_p_appeared) {
     double tfidf;
-    tfidf = log((double)(1+1) / (double)(1 + n_docs_p_appeared));
+    tfidf = log((double)(1 + 1) / (double)(1 + n_docs_p_appeared));
     tfidf += 1;
     tfidf *= freq_p_in_d;
     return tfidf;
@@ -125,24 +121,16 @@ void generate_tfidf(Index inverted) {
     }
 }
 
-int inverted_sort(const void *d1, const void *d2) {
-    const Pair *p1 = d1;
-    const Pair *p2 = d2;
-    return strcmp((char *)pair_first(*p1), (char *)pair_first(*p2));
-}
-
 void classifier(Index inverted, Index forward) {
     printf("Type the text: ");
     Vector words_expected = get_words();
-    Index index_text = index_new();
+    // Index_Map index_text = map_new();
+    // to do
+    // get_index_text(index_text, words_expected);
+    // generate_tfidf(index_text);
 
-    get_index_text(index_text, words_expected);
-    index_sort(index_text, inverted_sort);
 
-    generate_tfidf(index_text);
-    index_show(index_text);
-
-    index_destroy(index_text);
+    // map_destroy()
     vector_destroy(words_expected, free);
 }
 
@@ -162,17 +150,6 @@ Vector get_words() {
 
     free(word);
     return w;
-}
-
-int decrescent_values_sort(const void *d1, const void *d2) {
-    double *v1 = pair_second(*(const Pair *)d1);
-    double *v2 = pair_second(*(const Pair *)d2);
-    if (*v1 - *v2 < 0) {
-        return 1;
-    } else if (*v1 - *v2 > 0) {
-        return -1;
-    }
-    return 0;
 }
 
 void show_search_document(Vector v) {
@@ -204,8 +181,6 @@ void search_engine(Index inverted, Index forward) {
 
         sum = 0;
         for (j = 0; j < vector_size(words_input); j++) {
-            // nesse ponto temos a palavra mas nao temos o indice dela;
-            // precisamos do indice pois no Index_Map tem apenas o indice.
             char doc_index[2048];
             sprintf(doc_index, "%d", i);
             char *word = vector_at(words_input, j);
@@ -223,25 +198,13 @@ void search_engine(Index inverted, Index forward) {
             vector_push(values, VALUE);
         }
     }
-    vector_sort(values, decrescent_values_sort);
+    vector_sort(values, decrescent_double_sort);
 
     show_search_document(values);
 
     vector_destroy(words_input, free);
     vector_destroy(
         values, call(void, (void *data), { pair_destroy(data, free, free); }));
-}
-
-int decrescent_size_doc_cmp(const void *d1, const void *d2) {
-    int *f1 = pair_second(*(const Pair *)d1);
-    int *f2 = pair_second(*(const Pair *)d2);
-    return *f2 - *f1;
-}
-
-int crescent_size_doc_cmp(const void *d1, const void *d2) {
-    int *f1 = pair_second(*(const Pair *)d1);
-    int *f2 = pair_second(*(const Pair *)d2);
-    return *f1 - *f2;
 }
 
 void doc_report(Index index, data_cmp fn) {
@@ -283,13 +246,6 @@ void show_document(Vector v) {
     }
 }
 
-int decrescent_word_freq_cmp(const void *d1, const void *d2) {
-    Index_Item i1 = pair_second(*(const Pair *)d1);
-    Index_Item i2 = pair_second(*(const Pair *)d2);
-
-    return index_item_freq(i2) - index_item_freq(i1);
-}
-
 void show_word(int index, char *key, Index_Item ii) {
     char doc[2048];
     char class[2048];
@@ -326,7 +282,7 @@ void words_report(Index inverted, Index forward) {
     if (!values) {
         printf("\nWord doesn't exists!!\n\n");
     } else {
-        map_sort(values, decrescent_word_freq_cmp);
+        map_sort(values, decrescent_item_freq_sort);
         show_word_report(forward, values, word);
         // to do lista de frequencia de palavras por classe
     }
