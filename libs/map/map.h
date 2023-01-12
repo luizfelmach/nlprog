@@ -3,6 +3,13 @@
 
 #include <pair.h>
 
+#define map_for(key, value, map)                   \
+    key = pair_first(map_at(map, 0));              \
+    value = pair_second(map_at(map, 0));           \
+    for (int __i = 0; __i < map_size(map);         \
+         key = pair_first((Pair)map_at(map, __i)), \
+             value = pair_second(map_at(map, __i)), __i++)
+
 typedef void (*data_destroy)(void *data);
 typedef void (*data_fn)(void *data, void *ctx);
 typedef int (*data_cmp)(const void *d1, const void *d2);
