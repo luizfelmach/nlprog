@@ -47,7 +47,7 @@ $(INDEXER): $(BINARIES_DIR)indexer.c $(ALL_OBJECTS)
 # ----------- Generate nlprog -----------
 $(NLPROG): $(BINARIES_DIR)nlprog.c $(ALL_OBJECTS)
 	@echo -e "linking with \033[1;35mnlprog\033[0m"
-	@$(CC) $(CC_FLAGS) -o $(NLPROG) $(ALL_INCLUDES) $(BINARIES_DIR)nlprog.c $(ALL_OBJECTS)
+	@$(CC) -o $(NLPROG) $(ALL_INCLUDES) $(BINARIES_DIR)nlprog.c $(ALL_OBJECTS) $(CC_FLAGS) 
 
 # ----------- Generate experimental -----------
 $(EXPERIMENTAL): $(BINARIES_DIR)experimental.c $(ALL_OBJECTS)

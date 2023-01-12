@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector.h>
+#include <math.h>
 
 char *siggles[22] = {"at2", "bro", "cid", "cit", "con2", "eco", "ept",
                      "esp", "fam", "imo", "inf", "int",  "mic", "mul",
@@ -25,7 +26,7 @@ void search_engine(Index inverted, Index forward);
 int decrescent_values_sort(const void *d1, const void *d2);
 void show_search_document(Vector v);
 // classifier
-
+void classifier(Index inverted, Index forward);
 // word report
 void words_report(Index inverted, Index forward);
 int decrescent_word_freq_cmp(const void *d1, const void *d2);
@@ -79,6 +80,9 @@ int main(int argc, char *argv[]) {
     printf("\n\n#########################################################\n\n");
     printf("\n--------------------- WORDS REPORT ----------------------\n\n");
     words_report(inverted_index, forward_index);
+    printf("\n\n#########################################################\n\n");
+    printf("\n---------------------- CLASSIFIER -----------------------\n\n");
+    classifier(inverted_index, forward_index);
 
     fclose(file_indexes);
     index_destroy(inverted_index);
@@ -86,12 +90,69 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+// classifier
+void get_index_text(Index index, Vector text) {
+    char *word, doc[2048], *path;
+    int i;
+    for (i = 0; i < vector_size(text); i++) {
+        word = vector_at(text, i);
+        Index_Item ii = index_get_get(index, word, "0");
+        
+        index_add(index, word, "0", 1);
+    }
+}
+
+double calculate_tfidf(int freq_p_in_d, int n_docs_p_appeared) {
+    double tfidf;
+    tfidf = log((double)(1+1) / (double)(1 + n_docs_p_appeared));
+    tfidf += 1;
+    tfidf *= freq_p_in_d;
+    return tfidf;
+}
+
+void generate_tfidf(Index inverted) {
+    Pair p1, p2;
+    Index_Item di;
+    Map value;
+    double tfidf;
+    int i, j, len_docs;
+    for (i = 0; i < index_size(inverted); i++) {
+        p1 = index_at(inverted, i);
+        value = pair_second(p1);
+
+        p2 = map_at(value, 0);
+        di = pair_second(p2);
+        tfidf = calculate_tfidf(index_item_freq(di), 1);
+        index_set_tfidf(di, tfidf);
+    }
+}
+
+int inverted_sort(const void *d1, const void *d2) {
+    const Pair *p1 = d1;
+    const Pair *p2 = d2;
+    return strcmp((char *)pair_first(*p1), (char *)pair_first(*p2));
+}
+
+void classifier(Index inverted, Index forward) {
+    printf("Type the text: ");
+    Vector words_expected = get_words();
+    Index index_text = index_new();
+
+    get_index_text(index_text, words_expected);
+    index_sort(index_text, inverted_sort);
+
+    generate_tfidf(index_text);
+    index_show(index_text);
+
+    index_destroy(index_text);
+    vector_destroy(words_expected, free);
+}
+
 Vector get_words() {
     Vector w = vector_new();
     char *word = NULL;
     size_t len = 0;
 
-    printf("Search engine: ");
     int tam = getline(&word, &len, stdin);
     word[tam - 1] = '\0';
 
@@ -133,6 +194,7 @@ void show_search_document(Vector v) {
 }
 
 void search_engine(Index inverted, Index forward) {
+    printf("Search engine: ");
     Vector words_input = get_words();
     Vector values = vector_new();
 
