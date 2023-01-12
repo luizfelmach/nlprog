@@ -7,10 +7,23 @@
 #include <string.h>
 #include <vector.h>
 
+char *siggles[22] = {"at2", "bro", "cid", "cit", "con2", "eco", "ept",
+                     "esp", "fam", "imo", "inf", "int",  "mic", "mul",
+                     "opi", "poc", "pot", "reg", "sro",  "tav", "tvt"};
+
+char *classes[22] = {"at2       ",           "Qual a Bronca", "Cidades    ",
+                     "Ciencia e Tecnologia", "Concursos ",    "Economia   ",
+                     "Esportes   ",          "Especial  ",    "Familia   ",
+                     "Imoveis    ",          "Informatica",   "Internacional",
+                     "Minha Casa",           "Mulher     ",   "Opiniao    ",
+                     "Policia    ",          "Politica  ",    "Regional   ",
+                     "Sobre Rodas",          "Tudo a Ver ",   "TV Tudo   "};
+
 // search engine
 Vector get_words();
 void search_engine(Index inverted, Index forward);
 int decrescent_values_sort(const void *d1, const void *d2);
+void show_search_document(Vector v);
 // classifier
 
 // word report
@@ -103,16 +116,20 @@ int decrescent_values_sort(const void *d1, const void *d2) {
     return 0;
 }
 
-void show_search_document(void *data, void *ctx) {
-    char index[2048];
-    char doc[2048];
-    char class[2048];
-    double *total = pair_second((Pair)data);
-    sscanf((char *)pair_first((Pair)data), "%[^,],%[^,],%s", index, doc, class);
+void show_search_document(Vector v) {
+    int i;
+    for (i = 0; i < vector_size(v) && i < 10; i++) {
+        Pair p = vector_at(v, i);
+        char index[2048];
+        char doc[2048];
+        char class[2048];
+        double *total = pair_second(p);
+        sscanf((char *)pair_first(p), "%[^,],%[^,],%s", index, doc, class);
 
-    printf("index: %s \t doc: %s \t ", index, doc);
-    show_class(class);
-    printf("\t tf-idf total: %.2lf\n", *total);
+        printf("index: %s \t doc: %s \t ", index, doc);
+        show_class(class);
+        printf("\t tf-idf total: %.2lf\n", *total);
+    }
 }
 
 void search_engine(Index inverted, Index forward) {
@@ -148,7 +165,7 @@ void search_engine(Index inverted, Index forward) {
     }
     vector_sort(values, decrescent_values_sort);
 
-    vector_foreach(values, show_search_document, NULL);
+    show_search_document(values);
 
     vector_destroy(words_input, free);
     vector_destroy(
@@ -191,9 +208,9 @@ void doc_report(Index index, data_cmp fn) {
 }
 
 void show_document(Vector v) {
-    int i ;
-    for(i = 0; i<vector_size(v) && i < 10; i++){
-        Pair p = vector_at(v,i);
+    int i;
+    for (i = 0; i < vector_size(v) && i < 10; i++) {
+        Pair p = vector_at(v, i);
         char index[2048];
         char doc[2048];
         char class[2048];
@@ -204,7 +221,6 @@ void show_document(Vector v) {
         show_class(class);
         printf("\t words: %.d\n", *total);
     }
-    
 }
 
 int decrescent_word_freq_cmp(const void *d1, const void *d2) {
@@ -259,49 +275,16 @@ void words_report(Index inverted, Index forward) {
 void show_class(char *siggle) {
     if (!siggle) {
         printf("NULL \t ");
-    } else if (!strcmp(siggle, "at2")) {
-        printf("at2 \t ");  // Todo
-    } else if (!strcmp(siggle, "bro")) {
-        printf("Qual a Bronca?");
-    } else if (!strcmp(siggle, "cid")) {
-        printf("Cidade  ");
-    } else if (!strcmp(siggle, "cit")) {
-        printf("Ciencia e Tecnologia");
-    } else if (!strcmp(siggle, "con2")) {
-        printf("Concursos");
-    } else if (!strcmp(siggle, "eco")) {
-        printf("Economia");
-    } else if (!strcmp(siggle, "ept")) {
-        printf("Esportes");
-    } else if (!strcmp(siggle, "esp")) {
-        printf("Especial");
-    } else if (!strcmp(siggle, "fam")) {
-        printf("Familia ");
-    } else if (!strcmp(siggle, "imo")) {
-        printf("Imoveis ");
-    } else if (!strcmp(siggle, "inf")) {
-        printf("Informatica");
-    } else if (!strcmp(siggle, "int")) {
-        printf("Internacional");
-    } else if (!strcmp(siggle, "mic")) {
-        printf("Minha Casa");
-    } else if (!strcmp(siggle, "mul")) {
-        printf("Mulher");
-    } else if (!strcmp(siggle, "opi")) {
-        printf("Opiniao");
-    } else if (!strcmp(siggle, "poc")) {
-        printf("Policia");
-    } else if (!strcmp(siggle, "pot")) {
-        printf("Politica");
-    } else if (!strcmp(siggle, "reg")) {
-        printf("Regional");
-    } else if (!strcmp(siggle, "sro")) {
-        printf("Sobre Rodas");
-    } else if (!strcmp(siggle, "tav")) {
-        printf("Tudo a Ver");
-    } else if (!strcmp(siggle, "tvt")) {
-        printf("TV Tudo");
     } else {
-        printf("--");
+        int i;
+        for (i = 0; i < 21; i++) {
+            if (strcmp(siggle, siggles[i]) == 0) {
+                printf("%s", classes[i]);
+                break;
+            }
+        }
+        if (i == 21) {
+            printf("--       ");
+        }
     }
 }
