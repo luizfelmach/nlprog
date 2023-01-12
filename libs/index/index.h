@@ -9,8 +9,8 @@
     key = pair_first(index_at(index, 0));             \
     index_map = pair_second(index_at(index, 0));      \
     for (int __i = 0; __i < index_size(index); __i++, \
-             key = pair_first(index_at(index, 0)),    \
-             index_map = pair_second(index_at(index, 0)))
+             key = pair_first(index_at(index, __i)),  \
+             index_map = pair_second(index_at(index, __i)))
 
 typedef struct _index_item *Index_Item;
 typedef Map Index_Map;
