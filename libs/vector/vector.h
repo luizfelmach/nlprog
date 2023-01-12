@@ -3,6 +3,10 @@
 
 #include <stdlib.h>
 
+#define vector_for(var, vec) \
+    var = vector_at(vec, 0); \
+    for (int __i = 0; __i < vector_size(vec); __i++, var = vector_at(vec, __i))
+
 typedef void (*data_fn)(void *data, void *ctx);
 typedef void (*data_destroy)(void *data);
 typedef int (*data_cmp)(const void *data1, const void *data2);
