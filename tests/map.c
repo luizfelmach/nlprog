@@ -26,17 +26,13 @@ int main() {
     }
 
     printf("Total keys: %d\n\n", map_size(map));
-    map_foreach(map, map_show, NULL);
+
+    char *key;
+    int *value;
+    map_for(key, value, map) {
+        printf("%s - %d\n", key, *value);
+    }
 
     map_destroy(map, free, free);
     return 0;
-}
-
-void map_show(void *data, void *ctx) {
-    Pair p = (Pair)data;
-
-    char *key = (char *)pair_first(p);
-    int *value = (int *)pair_second(p);
-
-    printf("%s - %d\n", key, *value);
 }

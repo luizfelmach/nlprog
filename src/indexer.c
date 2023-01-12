@@ -110,12 +110,9 @@ int main(int argc, char *argv[]) {
 
 int ensure_exists_paths(Vector path_docs) {
     int result = 1;
-    FILE *file;
     char *path;
-    int i;
-    for (i = 0; i < vector_size(path_docs); i++) {
-        path = vector_at(path_docs, i);
-        file = fopen(path, "r");
+    vector_for(path, path_docs) {
+        FILE *file = fopen(path, "r");
         if (!file) {
             printf("warn: file '%s' does not exists.\n", path);
             result = 0;
@@ -128,16 +125,13 @@ int ensure_exists_paths(Vector path_docs) {
 
 void get_inverted(Index inverted, Vector path_docs) {
     char word[2048], doc[2048], *path;
-    FILE *file_doc;
-    int i;
-    for (i = 0; i < vector_size(path_docs); i++) {
-        path = (char *)vector_at(path_docs, i);
-        file_doc = fopen(path, "r");
+    vector_for(path, path_docs) {
+        FILE *file_doc = fopen(path, "r");
         while (1) {
             if (fscanf(file_doc, "%s", word) < 1) {
                 break;
             }
-            sprintf(doc, "%d", i);
+            sprintf(doc, "%d", __i);
             index_add(inverted, word, doc, 1);
         }
         fclose(file_doc);
