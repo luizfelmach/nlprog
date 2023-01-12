@@ -5,6 +5,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vector.h>
+
+// search engine
+Vector get_words();
+void search_engine(Index inverted, Index forward);
+
+// for no forward
+// sum
+// for no vetor de palavras que foi digitado
+// somar a variavel sum
+
+// classifier
+
+// word report
+
+// doc report
+
 void show_class(char *siggle);
 void show_document(int index, char *name);
 
@@ -41,19 +58,107 @@ int main(int argc, char *argv[]) {
     Index inverted_index = index_load(file_indexes);
     Index forward_index = index_load(file_indexes);
 
-    printf("\n-------------- inverted --------------\n\n");
-    index_show(inverted_index);
-    printf("\n-------------- forward ---------------\n\n");
-    index_show(forward_index);
+    // printf("\n-------------- inverted --------------\n\n");
+    // index_show(inverted_index);
+    // printf("\n-------------- forward ---------------\n\n");
+    // index_show(forward_index);
 
-    doc_report(forward_index);
-    words_report(inverted_index, forward_index);
+    search_engine(inverted_index, forward_index);
+
+    // doc_report(forward_index);
+    // words_report(inverted_index, forward_index);
 
     fclose(file_indexes);
     index_destroy(inverted_index);
     index_destroy(forward_index);
     return 0;
 }
+
+Vector get_words() {
+    Vector w = vector_new();
+    char *word = NULL;
+    size_t len = 0;
+
+    printf("Search engine: ");
+    int tam = getline(&word, &len, stdin);
+    word[tam - 1] = '\0';
+
+    char *token = strtok(word, " ");  // beleza lkkk
+    while (token) {
+        vector_push(w, new_string(token));
+        token = strtok(NULL, " ");  // faz uns tesstes agora
+    }                               // ok faz o commit e o push
+
+    free(word);  // roda ai roda com os testes do pdf  tem uns exemplos
+
+    // temos que verificar se a soma eh zero e nao colocar
+    // significa que o documento nao tem as palavras
+    return w;
+}
+
+void search_engine(Index inverted, Index forward) {
+    Vector words_input = get_words();
+    Vector values = vector_new();
+
+    typedef struct {
+        int idx;
+        double sum;
+    } VALUE;
+
+    double sum;
+    int i, j;
+    for (i = 0; i < index_size(forward); i++) {
+        Pair p = index_at(forward, i);
+        Index_Map im = pair_second(p);
+
+        sum = 0;
+        for (j = 0; j < vector_size(words_input); j++) {
+            // nesse ponto temos a palavra mas nao temos o indice dela;
+            // precisamos do indice pois no Index_Map tem apenas o indice.
+            char doc_index[2048];
+            sprintf(doc_index, "%d", i);
+            char *word = vector_at(words_input, j);
+
+            Index_Item ii = index_get_get(inverted, word, doc_index);
+
+            if (ii) {
+                sum += index_item_tfidf(ii);
+            }
+        }
+        if (sum > 0) {
+            VALUE *v = malloc(1 * sizeof(VALUE));
+            v->idx = i;
+            v->sum = sum;
+            vector_push(values, v);
+        }
+    } // acho que sim testa noticias com palagras aleatorias
+    data_cmp values_sort = call(int, (const void *d1, const void *d2), {
+        const VALUE *v1 = *(VALUE **)d1;
+        const VALUE *v2 = *(VALUE **)d2; // brabissima 
+        if (v1->sum - v2->sum < 0) {
+            return 1; 
+        } else if (v1->sum - v2->sum > 0) {
+            return -1;
+        }
+        return 0;
+    }); 
+    vector_sort(values, values_sort); 
+
+    void (*show)(void *data, void *ctx) = call(void, (void *data, void *ctx),  {
+        printf("%d %.2lf\n", ((VALUE *)data)->idx, ((VALUE *)data)->sum);
+    }); 
+   
+
+    vector_foreach(values, show, NULL);
+
+    vector_destroy(words_input, free);
+    vector_destroy(values, free);
+}
+
+// for no forward
+// sum
+// for no vetor de palavras que foi digitado
+// somar a variavel sum
 
 int sum_of_words(Map map) {
     int sum = 0;
@@ -149,7 +254,7 @@ void words_report(Index inverted, Index forward) {
 void show_document(int index, char *name) {
     char doc[2048];
     char class[2048];
-    sscanf(name,"%[^,],%s", doc, class);
+    sscanf(name, "%[^,],%s", doc, class);
     printf("index %d \t doc: %s \t class: ", index, doc);
     show_class(class);
 }
