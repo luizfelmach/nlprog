@@ -169,20 +169,15 @@ void get_forward(Index forward, Index inverted, Vector path_docs,
 
 void generate_tfidf(Index inverted, Index forward) {
     char word_index[2048], *doc_index;
-    Pair p1, p2;
     Index_Item di_inverted, di_forward;
-    Map value;
+    Index_Map value;
     double tfidf;
-    int i, j, len_docs;
-    for (i = 0; i < index_size(inverted); i++) {
-        p1 = index_at(inverted, i);
-        value = pair_second(p1);
-        sprintf(word_index, "%d", i);
+    int len_docs;
+    void *_;
+    index_for(_, value, inverted) {
         len_docs = map_size(value);
-        for (j = 0; j < map_size(value); j++) {
-            p2 = map_at(value, j);
-            doc_index = pair_first(p2);
-            di_inverted = pair_second(p2);
+        sprintf(word_index, "%d", __i);
+        map_for(doc_index, di_inverted, value) {
             di_forward = index_at_get(forward, atoi(doc_index), word_index);
             tfidf = calculate_tfidf(index_item_freq(di_inverted), len_docs);
             index_set_tfidf(di_inverted, tfidf);
