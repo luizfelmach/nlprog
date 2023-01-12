@@ -11,29 +11,23 @@
 Vector get_words();
 void search_engine(Index inverted, Index forward);
 
-// for no forward
-// sum
-// for no vetor de palavras que foi digitado
-// somar a variavel sum
-
 // classifier
 
 // word report
-
-// doc report
-
-void show_class(char *siggle);
-void show_document(int index, char *name);
-
-void doc_report(Index forward);
-int crescent_size_doc_cmp(const void *d1, const void *d2);
-int decrescent_size_doc_cmp(const void *d1, const void *d2);
-int sum_of_words(Map map);
-void show_doc_report(Index index);
-
 void words_report(Index inverted, Index forward);
 int decrescent_word_freq_cmp(const void *d1, const void *d2);
 void show_word_report(Index forward, Map values, char *word);
+void show_word(int index, char *key, Index_Item ii);
+
+// doc report
+void doc_report(Index index, data_cmp fn);
+int decrescent_size_doc_cmp(const void *d1, const void *d2);
+int crescent_size_doc_cmp(const void *d1, const void *d2);
+void show_document(void *data, void*ctx);
+
+void show_class(char *siggle);
+
+
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
@@ -63,10 +57,17 @@ int main(int argc, char *argv[]) {
     // printf("\n-------------- forward ---------------\n\n");
     // index_show(forward_index);
 
+    
+
     search_engine(inverted_index, forward_index);
 
-    // doc_report(forward_index);
-    // words_report(inverted_index, forward_index);
+    printf("\n----------- DOCUMENTS REPORT -----------\n\n");
+    printf("\n-------------- decrescent --------------\n\n");
+    doc_report(forward_index, decrescent_size_doc_cmp);
+    printf("\n--------------- crescent ---------------\n\n");
+    doc_report(forward_index, crescent_size_doc_cmp);
+    printf("\n------------ WORDS REPORT ---------------\n\n");
+    words_report(inverted_index, forward_index);
 
     fclose(file_indexes);
     index_destroy(inverted_index);
@@ -83,16 +84,13 @@ Vector get_words() {
     int tam = getline(&word, &len, stdin);
     word[tam - 1] = '\0';
 
-    char *token = strtok(word, " ");  // beleza lkkk
+    char *token = strtok(word, " ");
     while (token) {
         vector_push(w, new_string(token));
-        token = strtok(NULL, " ");  // faz uns tesstes agora
-    }                               // ok faz o commit e o push
+        token = strtok(NULL, " "); 
+    }                               
 
-    free(word);  // roda ai roda com os testes do pdf  tem uns exemplos
-
-    // temos que verificar se a soma eh zero e nao colocar
-    // significa que o documento nao tem as palavras
+    free(word); 
     return w;
 }
 
@@ -131,23 +129,22 @@ void search_engine(Index inverted, Index forward) {
             v->sum = sum;
             vector_push(values, v);
         }
-    } // acho que sim testa noticias com palagras aleatorias
+    }  // acho que sim testa noticias com palagras aleatorias
     data_cmp values_sort = call(int, (const void *d1, const void *d2), {
         const VALUE *v1 = *(VALUE **)d1;
-        const VALUE *v2 = *(VALUE **)d2; // brabissima 
+        const VALUE *v2 = *(VALUE **)d2;  // brabissima
         if (v1->sum - v2->sum < 0) {
-            return 1; 
+            return 1;
         } else if (v1->sum - v2->sum > 0) {
             return -1;
         }
         return 0;
-    }); 
-    vector_sort(values, values_sort); 
+    });
+    vector_sort(values, values_sort);
 
-    void (*show)(void *data, void *ctx) = call(void, (void *data, void *ctx),  {
+    void (*show)(void *data, void *ctx) = call(void, (void *data, void *ctx), {
         printf("%d %.2lf\n", ((VALUE *)data)->idx, ((VALUE *)data)->sum);
-    }); 
-   
+    });
 
     vector_foreach(values, show, NULL);
 
@@ -155,67 +152,71 @@ void search_engine(Index inverted, Index forward) {
     vector_destroy(values, free);
 }
 
-// for no forward
-// sum
-// for no vetor de palavras que foi digitado
-// somar a variavel sum
-
-int sum_of_words(Map map) {
-    int sum = 0;
-    data_fn fn = call(void, (void *data, void *ctx), {
-        Index_Item di = pair_second((Pair)data);
-        *(int *)ctx += index_item_freq(di);
-    });
-    map_foreach(map, fn, &sum);
-    return sum;
+int decrescent_size_doc_cmp(const void *d1, const void *d2) {
+    int *f1 = pair_second(*(const Pair *)d1);
+    int *f2 = pair_second(*(const Pair *)d2);
+    return *f2 - *f1;
 }
 
 int crescent_size_doc_cmp(const void *d1, const void *d2) {
-    Map m1 = pair_second(*(const Pair *)d1);
-    Map m2 = pair_second(*(const Pair *)d2);
-
-    int total_words1 = sum_of_words(m1);
-    int total_words2 = sum_of_words(m2);
-
-    return total_words1 > total_words2;
+    int *f1 = pair_second(*(const Pair *)d1);
+    int *f2 = pair_second(*(const Pair *)d2);
+    return *f1 - *f2;
 }
 
-int decrescent_size_doc_cmp(const void *d1, const void *d2) {
-    Map m1 = pair_second(*(const Pair *)d1);
-    Map m2 = pair_second(*(const Pair *)d2);
-
-    int total_words1 = sum_of_words(m1);
-    int total_words2 = sum_of_words(m2);
-
-    return total_words1 < total_words2;
-}
-
-void show_doc_report(Index index) {
-    for (int i = 0; i < index_size(index) && i < 10; i++) {  // show 10º firsts
-        Pair p = index_at(index, i);
-        Map m = pair_second(p);
-        show_document(i, pair_first(p));
-        printf(" \t words: %d\n", sum_of_words(m));
+void doc_report(Index index, data_cmp fn) {
+    Vector v = vector_new();
+    int i, j;
+    for (i = 0; i < index_size(index); i++) {
+        Pair p = index_at(index, i);    // nesse documento
+        Index_Map im = pair_second(p);  // todas as palavras
+        double sum = 0;
+        for (j = 0; j < map_size(im); j++) {
+            Pair p2 = map_at(im, j);
+            Index_Item ii = pair_second(p2);
+            sum += index_item_freq(ii);
+        }
+        char index[2048];
+        sprintf(index, "%d,%s", i, (char*)pair_first(p)); // index e name
+        Pair values = pair_new(new_string(index), new_int(sum));
+        vector_push(v,values);
     }
+    vector_sort(v,fn);
+    vector_foreach(v,show_document,NULL);
+    vector_destroy(v, call(void, (void *data),{
+        pair_destroy(data, free, free);
+    }));
 }
 
-void doc_report(Index forward) {
-    // Gerar relatório de documentos a partir da quantidade de palavras
-    printf("\n----------- DOCUMENTS REPORT -----------\n\n");
-    printf("\n-------------- decrescent --------------\n\n");
-    index_sort(forward, decrescent_size_doc_cmp);
-    show_doc_report(forward);
+void show_document(void *data, void*ctx){
+    char index[2048];
+    char doc[2048];
+    char class[2048];
+    int *total = pair_second((Pair)data);
+    sscanf((char*)pair_first((Pair)data),"%[^,],%[^,],%s",index,doc,class);
 
-    printf("\n-------------- crescent ----------------\n\n");
-    index_sort(forward, crescent_size_doc_cmp);
-    show_doc_report(forward);
+    printf("index: %s \t doc: %s \t ", index, doc);
+    show_class(class);
+    printf("\t words: %d\n", *total);
 }
+
 
 int decrescent_word_freq_cmp(const void *d1, const void *d2) {
     Index_Item i1 = pair_second(*(const Pair *)d1);
     Index_Item i2 = pair_second(*(const Pair *)d2);
 
-    return index_item_freq(i1) < index_item_freq(i2);
+    return index_item_freq(i2) - index_item_freq(i1);
+}
+
+void show_word(int index, char *key, Index_Item ii){
+    char doc[2048];
+    char class[2048];
+    sscanf(key,"%[^,],%s",doc,class);
+
+    printf("index: %d \t doc: %s \t ", index, doc);
+    show_class(class);
+    printf(" \t ");
+    index_item_show(ii);
 }
 
 void show_word_report(Index forward, Map values, char *word) {
@@ -229,14 +230,10 @@ void show_word_report(Index forward, Map values, char *word) {
 
         // finding in forward the name and class of doc
         Pair p2 = index_at(forward, idx);
-        show_document(idx, pair_first(p2));
-        printf(" \t ");
-        index_item_show(ii);
+        show_word(i, pair_first(p2), ii);
     }
 }
-
 void words_report(Index inverted, Index forward) {
-    printf("\n------------ WORDS REPORT ---------------\n\n");
     printf("Search a word: ");
     char word[2048];
     scanf("%s%*c", word);
@@ -249,14 +246,6 @@ void words_report(Index inverted, Index forward) {
         map_sort(values, decrescent_word_freq_cmp);
         show_word_report(forward, values, word);
     }
-}
-
-void show_document(int index, char *name) {
-    char doc[2048];
-    char class[2048];
-    sscanf(name, "%[^,],%s", doc, class);
-    printf("index %d \t doc: %s \t class: ", index, doc);
-    show_class(class);
 }
 
 void show_class(char *siggle) {
