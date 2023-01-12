@@ -10,7 +10,7 @@
 // search engine
 Vector get_words();
 void search_engine(Index inverted, Index forward);
-
+int decrescent_values_sort(const void *d1, const void *d2);
 // classifier
 
 // word report
@@ -23,11 +23,9 @@ void show_word(int index, char *key, Index_Item ii);
 void doc_report(Index index, data_cmp fn);
 int decrescent_size_doc_cmp(const void *d1, const void *d2);
 int crescent_size_doc_cmp(const void *d1, const void *d2);
-void show_document(void *data, void*ctx);
+void show_document(Vector v);
 
 void show_class(char *siggle);
-
-
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
@@ -51,22 +49,22 @@ int main(int argc, char *argv[]) {
 
     Index inverted_index = index_load(file_indexes);
     Index forward_index = index_load(file_indexes);
-
-    // printf("\n-------------- inverted --------------\n\n");
-    // index_show(inverted_index);
-    // printf("\n-------------- forward ---------------\n\n");
-    // index_show(forward_index);
-
-    
-
+    printf("\n\n########################################################\n\n");
+    printf("\n----------------------- inverted -----------------------\n\n");
+    index_show(inverted_index);
+    printf("\n----------------------- forward ------------------------\n\n");
+    index_show(forward_index);
+    printf("\n\n########################################################\n\n");
     search_engine(inverted_index, forward_index);
 
-    printf("\n----------- DOCUMENTS REPORT -----------\n\n");
-    printf("\n-------------- decrescent --------------\n\n");
+    printf("\n\n#########################################################\n\n");
+    printf("\n------------------- DOCUMENTS REPORT --------------------\n\n");
+    printf("\n---------------------- decrescent -----------------------\n\n");
     doc_report(forward_index, decrescent_size_doc_cmp);
-    printf("\n--------------- crescent ---------------\n\n");
+    printf("\n----------------------- crescent ------------------------\n\n");
     doc_report(forward_index, crescent_size_doc_cmp);
-    printf("\n------------ WORDS REPORT ---------------\n\n");
+    printf("\n\n#########################################################\n\n");
+    printf("\n--------------------- WORDS REPORT ----------------------\n\n");
     words_report(inverted_index, forward_index);
 
     fclose(file_indexes);
@@ -87,21 +85,39 @@ Vector get_words() {
     char *token = strtok(word, " ");
     while (token) {
         vector_push(w, new_string(token));
-        token = strtok(NULL, " "); 
-    }                               
+        token = strtok(NULL, " ");
+    }
 
-    free(word); 
+    free(word);
     return w;
+}
+
+int decrescent_values_sort(const void *d1, const void *d2) {
+    double *v1 = pair_second(*(const Pair *)d1);
+    double *v2 = pair_second(*(const Pair *)d2);
+    if (*v1 - *v2 < 0) {
+        return 1;
+    } else if (*v1 - *v2 > 0) {
+        return -1;
+    }
+    return 0;
+}
+
+void show_search_document(void *data, void *ctx) {
+    char index[2048];
+    char doc[2048];
+    char class[2048];
+    double *total = pair_second((Pair)data);
+    sscanf((char *)pair_first((Pair)data), "%[^,],%[^,],%s", index, doc, class);
+
+    printf("index: %s \t doc: %s \t ", index, doc);
+    show_class(class);
+    printf("\t tf-idf total: %.2lf\n", *total);
 }
 
 void search_engine(Index inverted, Index forward) {
     Vector words_input = get_words();
     Vector values = vector_new();
-
-    typedef struct {
-        int idx;
-        double sum;
-    } VALUE;
 
     double sum;
     int i, j;
@@ -124,32 +140,19 @@ void search_engine(Index inverted, Index forward) {
             }
         }
         if (sum > 0) {
-            VALUE *v = malloc(1 * sizeof(VALUE));
-            v->idx = i;
-            v->sum = sum;
-            vector_push(values, v);
+            char index[2048];
+            sprintf(index, "%d,%s", i, (char *)pair_first(p));
+            Pair VALUE = pair_new(new_string(index), new_double(sum));
+            vector_push(values, VALUE);
         }
-    }  // acho que sim testa noticias com palagras aleatorias
-    data_cmp values_sort = call(int, (const void *d1, const void *d2), {
-        const VALUE *v1 = *(VALUE **)d1;
-        const VALUE *v2 = *(VALUE **)d2;  // brabissima
-        if (v1->sum - v2->sum < 0) {
-            return 1;
-        } else if (v1->sum - v2->sum > 0) {
-            return -1;
-        }
-        return 0;
-    });
-    vector_sort(values, values_sort);
+    }
+    vector_sort(values, decrescent_values_sort);
 
-    void (*show)(void *data, void *ctx) = call(void, (void *data, void *ctx), {
-        printf("%d %.2lf\n", ((VALUE *)data)->idx, ((VALUE *)data)->sum);
-    });
-
-    vector_foreach(values, show, NULL);
+    vector_foreach(values, show_search_document, NULL);
 
     vector_destroy(words_input, free);
-    vector_destroy(values, free);
+    vector_destroy(
+        values, call(void, (void *data), { pair_destroy(data, free, free); }));
 }
 
 int decrescent_size_doc_cmp(const void *d1, const void *d2) {
@@ -177,29 +180,32 @@ void doc_report(Index index, data_cmp fn) {
             sum += index_item_freq(ii);
         }
         char index[2048];
-        sprintf(index, "%d,%s", i, (char*)pair_first(p)); // index e name
+        sprintf(index, "%d,%s", i, (char *)pair_first(p));  // index e name
         Pair values = pair_new(new_string(index), new_int(sum));
-        vector_push(v,values);
+        vector_push(v, values);
     }
-    vector_sort(v,fn);
-    vector_foreach(v,show_document,NULL);
-    vector_destroy(v, call(void, (void *data),{
-        pair_destroy(data, free, free);
-    }));
+    vector_sort(v, fn);
+    show_document(v);
+    vector_destroy(
+        v, call(void, (void *data), { pair_destroy(data, free, free); }));
 }
 
-void show_document(void *data, void*ctx){
-    char index[2048];
-    char doc[2048];
-    char class[2048];
-    int *total = pair_second((Pair)data);
-    sscanf((char*)pair_first((Pair)data),"%[^,],%[^,],%s",index,doc,class);
+void show_document(Vector v) {
+    int i ;
+    for(i = 0; i<vector_size(v) && i < 10; i++){
+        Pair p = vector_at(v,i);
+        char index[2048];
+        char doc[2048];
+        char class[2048];
+        int *total = pair_second(p);
+        sscanf((char *)pair_first(p), "%[^,],%[^,],%s", index, doc, class);
 
-    printf("index: %s \t doc: %s \t ", index, doc);
-    show_class(class);
-    printf("\t words: %d\n", *total);
+        printf("index: %s \t doc: %s \t ", index, doc);
+        show_class(class);
+        printf("\t words: %.d\n", *total);
+    }
+    
 }
-
 
 int decrescent_word_freq_cmp(const void *d1, const void *d2) {
     Index_Item i1 = pair_second(*(const Pair *)d1);
@@ -208,10 +214,10 @@ int decrescent_word_freq_cmp(const void *d1, const void *d2) {
     return index_item_freq(i2) - index_item_freq(i1);
 }
 
-void show_word(int index, char *key, Index_Item ii){
+void show_word(int index, char *key, Index_Item ii) {
     char doc[2048];
     char class[2048];
-    sscanf(key,"%[^,],%s",doc,class);
+    sscanf(key, "%[^,],%s", doc, class);
 
     printf("index: %d \t doc: %s \t ", index, doc);
     show_class(class);
@@ -230,9 +236,10 @@ void show_word_report(Index forward, Map values, char *word) {
 
         // finding in forward the name and class of doc
         Pair p2 = index_at(forward, idx);
-        show_word(i, pair_first(p2), ii);
+        show_word(idx, pair_first(p2), ii);
     }
 }
+
 void words_report(Index inverted, Index forward) {
     printf("Search a word: ");
     char word[2048];
@@ -245,6 +252,7 @@ void words_report(Index inverted, Index forward) {
     } else {
         map_sort(values, decrescent_word_freq_cmp);
         show_word_report(forward, values, word);
+        // to do lista de frequencia de palavras por classe
     }
 }
 

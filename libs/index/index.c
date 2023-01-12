@@ -47,7 +47,7 @@ double index_item_tfidf(Index_Item ii) {
 }
 
 void index_item_show(Index_Item ii) {
-    printf("freq: %d     tf-idf: %.2lf\n", ii->freq, ii->tf_idf);
+    printf("freq: %d \t tf-idf: %.2lf\n", ii->freq, ii->tf_idf);
 }
 
 Index_Item index_item_load(FILE *file) {
@@ -77,7 +77,7 @@ void index_map_show(Index_Map im) {
         Pair p = map_at(im, i);
         char *key = pair_first(p);
         Index_Item ii = pair_second(p);
-        printf("# %s     ", key);
+        printf("\t # %s \t ", key);
         index_item_show(ii);
     }
 }
@@ -144,7 +144,7 @@ void index_show(Index index) {
         Pair p = map_at(index->data, i);
         char *key = pair_first(p);
         Index_Map im = pair_second(p);
-        printf("%s\n", key);
+        printf("# %s\n", key);
         index_map_show(im);
         printf("\n");
     }
