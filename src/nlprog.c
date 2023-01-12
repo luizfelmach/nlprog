@@ -95,9 +95,7 @@ void get_index_text(Index index, Vector text) {
     char *word, doc[2048], *path;
     int i;
     for (i = 0; i < vector_size(text); i++) {
-        word = vector_at(text, i);
-        Index_Item ii = index_get_get(index, word, "0");
-        
+        word = vector_at(text, i);        
         index_add(index, word, "0", 1);
     }
 }
