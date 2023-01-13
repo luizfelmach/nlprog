@@ -10,6 +10,7 @@
 
 // nlprog
 
+void setup(int argc, char *argv[], Index *inverted, Index *forward);
 Vector get_words_input(char *label);
 
 // search engine
@@ -37,41 +38,37 @@ void show_word_report(Index forward, Map values, char *word);
 void show_word(int index, char *key, Index_Item ii);
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        printf("error: missing parameters.\n");
-        exit(1);
-    }
+    Index inverted, forward;
+    setup(argc, argv, &inverted, &forward);
 
-    char file_indexes_name[2048];
+    // search_engine(inverted, forward);
+    // classifier(inverted, forward, 10);
+    // word_report(inverted, forward);
+    // doc_report(forward);
 
-    sprintf(file_indexes_name, "%s/%s", argv[1], argv[2]);
-
-    FILE *file_indexes = fopen(file_indexes_name, "r");
-
-    printf("info: current folder is '%s'.\n", argv[1]);
-    printf("info: path to file input is '%s'.\n", file_indexes_name);
-
-    if (!file_indexes) {
-        printf("error: can not open file '%s'.\n", file_indexes_name);
-        exit(1);
-    }
-
-    Index inverted = index_load(file_indexes);
-    Index forward = index_load(file_indexes);
-
-    search_engine(inverted, forward);
-    //  classifier(inverted, forward, 10);
-    word_report(inverted, forward);
-    //  doc_report(forward);
-
-    fclose(file_indexes);
     index_destroy(inverted);
     index_destroy(forward);
-
     return 0;
 }
 
 // nlprog
+
+void setup(int argc, char *argv[], Index *inverted, Index *forward) {
+    char filename_indexes[2048];
+    if (argc < 3) {
+        printf("error: missing parameters.\n");
+        exit(1);
+    }
+    sprintf(filename_indexes, "%s/%s", argv[1], argv[2]);
+    FILE *file_indexes = fopen(filename_indexes, "rb");
+    if (!file_indexes) {
+        printf("error: can not open file '%s'.\n", filename_indexes);
+        exit(1);
+    }
+    *inverted = index_load(file_indexes);
+    *forward = index_load(file_indexes);
+    fclose(file_indexes);
+}
 
 Vector get_words_input(char *label) {
     printf("%s", label);
