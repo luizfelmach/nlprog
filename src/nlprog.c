@@ -30,7 +30,12 @@ void search_show_docs(Vector docs_index, Index forward);
 void search_engine(Index inverted, Index forward);
 
 // classifier
-void classifier(Index inverted, Index forward);
+void classifier(Index inverted, Index forward, int k);
+
+// doc report
+void doc_report_show(Vector docs_index, Index forward);
+void doc_report(Index forward);
+void show_document(Vector v);
 
 // word report
 void word_report_show(Vector docs_index, Index inverted, Index forward,
@@ -39,11 +44,7 @@ void word_report(Index inverted, Index forward);
 void show_word_report(Index forward, Map values, char *word);
 void show_word(int index, char *key, Index_Item ii);
 
-// doc report
-void doc_report_show(Vector docs_index, Index forward);
-void doc_report(Index forward);
-void show_document(Vector v);
-
+// ...
 void show_class(char *siggle);
 
 int main(int argc, char *argv[]) {
@@ -70,30 +71,9 @@ int main(int argc, char *argv[]) {
     Index forward = index_load(file_indexes);
 
     // search_engine(inverted, forward);
-    word_report(inverted, forward);
+    // classifier(inverted, forward, 10);
+    // word_report(inverted, forward);
     // doc_report(forward);
-
-    // printf("\n\n########################################################\n\n");
-    // printf("\n----------------------- inverted -----------------------\n\n");
-    // index_show(inverted_index);
-    // printf("\n----------------------- forward ------------------------\n\n");
-    // index_show(forward_index);
-    // printf("\n\n########################################################\n\n");
-    // search_engine(inverted_index, forward_index);
-    // printf("\n\n#########################################################\n\n");
-    // printf("\n------------------- DOCUMENTS REPORT
-    // --------------------\n\n"); printf("\n---------------------- decrescent
-    // -----------------------\n\n"); doc_report(forward_index,
-    // decrescent_int_sort); printf("\n----------------------- crescent
-    // ------------------------\n\n"); doc_report(forward_index,
-    // crescent_int_sort);
-    // printf("\n\n#########################################################\n\n");
-    // printf("\n--------------------- WORDS REPORT
-    // ----------------------\n\n"); words_report(inverted_index,
-    // forward_index);
-    // printf("\n\n#########################################################\n\n");
-    // printf("\n---------------------- CLASSIFIER
-    // -----------------------\n\n"); classifier(inverted_index, forward_index);
 
     fclose(file_indexes);
     index_destroy(inverted);
@@ -178,7 +158,7 @@ void search_engine(Index inverted, Index forward) {
 
 // classifier
 
-void classifier(Index inverted, Index forward) {
+void classifier(Index inverted, Index forward, int k) {
     printf("Type the text: ");
     Vector words_expected = get_words_input();
     // Index_Map index_text = map_new();
