@@ -22,7 +22,7 @@ char *classes[22] = {"at2       ",           "Qual a Bronca", "Cidades    ",
 
 // nlprog
 
-Vector get_words_input();
+Vector get_words_input(char *label);
 
 // search engine
 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     Index inverted = index_load(file_indexes);
     Index forward = index_load(file_indexes);
 
-    // search_engine(inverted, forward);
+    search_engine(inverted, forward);
     //  classifier(inverted, forward, 10);
     word_report(inverted, forward);
     //  doc_report(forward);
@@ -88,7 +88,8 @@ int main(int argc, char *argv[]) {
 
 // nlprog
 
-Vector get_words_input() {
+Vector get_words_input(char *label) {
+    printf("%s", label);
     Vector words_input = vector_new();
     char *word = NULL;
     size_t len = 0;
@@ -125,8 +126,7 @@ void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
 }
 
 void search_engine(Index inverted, Index forward) {
-    printf("Search engine: ");
-    Vector words_input = get_words_input();
+    Vector words_input = get_words_input("search engine: ");
     Vector values = vector_new();
     Vector docs_index = vector_new();
     Vector tfidf = vector_new();
@@ -187,8 +187,7 @@ void classifier(Index inverted, Index forward, int k) {
         return;
     }
 
-    printf("type the text: ");
-    Vector words_input = get_words_input();
+    Vector words_input = get_words_input("type the text: ");
     Vector docs_index = vector_new();
 
     vector_push(docs_index, new_int(0));
@@ -286,7 +285,7 @@ void word_report_show(Vector docs_index, Index inverted, Index forward,
 }
 
 void word_report(Index inverted, Index forward) {
-    printf("Search a word: ");
+    printf("search a word: ");
     char word[2048];
     scanf("%s%*c", word);
     Index_Map im = index_get(inverted, word);
@@ -311,7 +310,6 @@ void word_report(Index inverted, Index forward) {
         if (__i > 9) {
             break;
         }
-        printf("%d\n", *(int *)pair_first(p));
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
     }
     word_report_show(docs_index, inverted, forward, word);
