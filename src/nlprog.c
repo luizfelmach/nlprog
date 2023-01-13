@@ -10,7 +10,7 @@
 
 // nlprog
 
-void setup(int argc, char *argv[], Index *inverted, Index *forward);
+void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k);
 Vector get_words_input(char *label);
 
 // search engine
@@ -36,8 +36,9 @@ void word_report_show(Vector docs_index, Index inverted, Index forward,
 void word_report(Index inverted, Index forward);
 
 int main(int argc, char *argv[]) {
+    int k;
     Index inverted, forward;
-    setup(argc, argv, &inverted, &forward);
+    setup(argc, argv, &inverted, &forward, &k);
 
     // search_engine(inverted, forward);
     // classifier(inverted, forward, 10);
@@ -51,18 +52,17 @@ int main(int argc, char *argv[]) {
 
 // nlprog
 
-void setup(int argc, char *argv[], Index *inverted, Index *forward) {
-    char filename_indexes[2048];
+void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k) {
     if (argc < 3) {
         printf("error: missing parameters.\n");
         exit(1);
     }
-    sprintf(filename_indexes, "%s/%s", argv[1], argv[2]);
-    FILE *file_indexes = fopen(filename_indexes, "rb");
+    FILE *file_indexes = fopen(argv[1], "rb");
     if (!file_indexes) {
-        printf("error: can not open file '%s'.\n", filename_indexes);
+        printf("error: can not open file '%s'.\n", argv[1]);
         exit(1);
     }
+    *k = atoi(argv[2]);
     *inverted = index_load(file_indexes);
     *forward = index_load(file_indexes);
     fclose(file_indexes);
