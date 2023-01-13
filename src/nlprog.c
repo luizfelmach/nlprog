@@ -29,14 +29,14 @@ void classifier(Index inverted, Index forward, int k);
 
 // doc report
 
-void doc_report_show(Vector docs_index, Index forward);
+void doc_report_show(Vector docs_index, Vector docs_freq, Index forward);
 void doc_report(Index forward);
 void show_document(Vector v);
 
 // word report
 
-void word_report_show(Vector docs_index, Index inverted, Index forward,
-                      char *word);
+void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
+                      Index forward, char *word);
 void word_report(Index inverted, Index forward);
 
 int main(int argc, char *argv[]) {
@@ -46,8 +46,8 @@ int main(int argc, char *argv[]) {
 
     search_engine(inverted, forward);
     // classifier(inverted, forward, 10);
-    // word_report(inverted, forward);
-    // doc_report(forward);
+    doc_report(forward);
+    word_report(inverted, forward);
 
     index_destroy(inverted);
     index_destroy(forward);
@@ -206,7 +206,7 @@ void classifier(Index inverted, Index forward, int k) {
 
 // doc report
 
-void doc_report_show(Vector docs_index, Index forward) {
+void doc_report_show(Vector docs_index, Vector docs_freq, Index forward) {
     char path[2048], class[2048];
     int *doc_index;
     if (!vector_size(docs_index)) {
@@ -220,15 +220,24 @@ void doc_report_show(Vector docs_index, Index forward) {
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
-        printf("index: %d \t path: %s \t class: %s\n", *doc_index, path, class);
+        const char *classname = classname_map_get(class);
+        int *freq = vector_at(docs_freq, __i);
+
+        printf("# %5d \t", *doc_index);
+        printf("%12s \t", classname);
+        printf("%d \t", *freq);
+        printf("%s\n", path);
     }
 }
 
 void doc_report(Index forward) {
-    Vector values = vector_new();
+    printf("\n............ doc report ............\n\n");
 
+    Vector values = vector_new();
     Vector docs_index_asc = vector_new();
     Vector docs_index_desc = vector_new();
+    Vector docs_freq_asc = vector_new();
+    Vector docs_freq_desc = vector_new();
 
     Index_Map im;
     void *_;
@@ -249,6 +258,7 @@ void doc_report(Index forward) {
             break;
         }
         vector_push(docs_index_asc, new_int(*(int *)pair_first(p)));
+        vector_push(docs_freq_asc, new_int(*(int *)pair_second(p)));
     }
 
     vector_sort(values, decrescent_int_sort);
@@ -257,22 +267,25 @@ void doc_report(Index forward) {
             break;
         }
         vector_push(docs_index_desc, new_int(*(int *)pair_first(p)));
+        vector_push(docs_freq_desc, new_int(*(int *)pair_second(p)));
     }
 
-    printf("\nasc order\n");
-    doc_report_show(docs_index_asc, forward);
-    printf("\ndesc order\n");
-    doc_report_show(docs_index_desc, forward);
+    printf("--> asc order\n");
+    doc_report_show(docs_index_asc, docs_freq_asc, forward);
+    printf("\n--> desc order\n");
+    doc_report_show(docs_index_desc, docs_freq_desc, forward);
 
     vector_destroy(docs_index_asc, free);
     vector_destroy(docs_index_desc, free);
-    vector_destroy(values, generic_free2(pair_destroy, free, free));
+    vector_destroy(docs_freq_asc, free);
+    vector_destroy(docs_freq_desc, free);
+    vector_destroy(values, destroy_pair_inside_vector);
 }
 
 // word report
 
-void word_report_show(Vector docs_index, Index inverted, Index forward,
-                      char *word) {
+void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
+                      Index forward, char *word) {
     char path[2048], class[2048];
     int *doc_index;
     if (!vector_size(docs_index)) {
@@ -286,23 +299,38 @@ void word_report_show(Vector docs_index, Index inverted, Index forward,
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
-        printf("index: %d \t path: %s \t class: %s\n", *doc_index, path, class);
+        const char *classname = classname_map_get(class);
+        int *freq = vector_at(word_freq, __i);
+
+        printf("# %5d \t", *doc_index);
+        printf("%12s \t", classname);
+        printf("%d \t", *freq);
+        printf("%s\n", path);
     }
 }
 
 void word_report(Index inverted, Index forward) {
-    printf("search a word: ");
+    printf("\n............ word report ............\n\n");
+
     char word[2048];
+    printf("query: ");
     scanf("%s%*c", word);
+    printf("\n");
+
     Index_Map im = index_get(inverted, word);
     if (!im) {
-        printf("info: word does not exists.\n");
+        printf("info: '%s' does not appeared.\n", word);
         return;
     }
 
     Vector docs_index = vector_new();
+    Vector word_freq = vector_new();
     Vector values = vector_new();
-    printf("info: '%s' appeared in %d docs.\n", word, map_size(im));
+
+    printf("info: '%s' appeared in %d/%d docs.\n", word, map_size(im),
+           index_size(forward));
+    printf("\n");
+
     Index_Item ii;
     char *doc_index;
     map_for(doc_index, ii, im) {
@@ -310,15 +338,24 @@ void word_report(Index inverted, Index forward) {
             pair_new(new_int(atoi(doc_index)), new_int(index_item_freq(ii)));
         vector_push(values, p);
     }
-    Pair p;
+
     vector_sort(values, decrescent_int_sort);
+
+    Pair p;
     vector_for(p, values) {
         if (__i > 9) {
             break;
         }
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
+        vector_push(word_freq, new_int(*(int *)pair_second(p)));
     }
-    word_report_show(docs_index, inverted, forward, word);
+
+    printf("--> most frequently\n");
+    word_report_show(docs_index, word_freq, inverted, forward, word);
+    printf("\n--> most frequently (class)\n");
+    word_report_show(docs_index, word_freq, inverted, forward, word);
+
     vector_destroy(docs_index, free);
-    vector_destroy(values, generic_free2(pair_destroy, free, free));
+    vector_destroy(word_freq, free);
+    vector_destroy(values, destroy_pair_inside_vector);
 }
