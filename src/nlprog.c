@@ -72,9 +72,9 @@ Vector get_words_input(char *label) {
     printf("%s", label);
     Vector words_input = vector_new();
     char *word = NULL;
-    size_t len = 0;
-    int tam = getline(&word, &len, stdin);
-    word[tam - 1] = '\0';
+    size_t _ = 0;
+    int len = getline(&word, &_, stdin);
+    word[len - 1] = '\0';
     char *token = strtok(word, " ");
     while (token) {
         vector_push(words_input, new_string(token));
