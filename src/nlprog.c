@@ -34,8 +34,6 @@ void show_document(Vector v);
 void word_report_show(Vector docs_index, Index inverted, Index forward,
                       char *word);
 void word_report(Index inverted, Index forward);
-void show_word_report(Index forward, Map values, char *word);
-void show_word(int index, char *key, Index_Item ii);
 
 int main(int argc, char *argv[]) {
     Index inverted, forward;
