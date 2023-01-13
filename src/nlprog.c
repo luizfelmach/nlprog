@@ -29,8 +29,6 @@ Vector get_words_input();
 void search_show_docs(Vector idx, Index forward);
 void search_engine(Index inverted, Index forward);
 
-void show_search_document(Vector v);
-
 // classifier
 void classifier(Index inverted, Index forward);
 
