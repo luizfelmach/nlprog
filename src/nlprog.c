@@ -26,7 +26,7 @@ Vector get_words_input();
 
 // search engine
 
-void search_show_docs(Vector docs_index, Index forward);
+void search_show_docs(Vector docs_index, Vector tfidf, Index forward);
 void search_engine(Index inverted, Index forward);
 
 // classifier
@@ -75,9 +75,9 @@ int main(int argc, char *argv[]) {
     Index forward = index_load(file_indexes);
 
     // search_engine(inverted, forward);
-    // classifier(inverted, forward, 10);
-    // word_report(inverted, forward);
-    // doc_report(forward);
+    //  classifier(inverted, forward, 10);
+    word_report(inverted, forward);
+    //  doc_report(forward);
 
     fclose(file_indexes);
     index_destroy(inverted);
@@ -105,7 +105,7 @@ Vector get_words_input() {
 
 // search engine
 
-void search_show_docs(Vector docs_index, Index forward) {
+void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
     char path[2048], class[2048];
     int *doc_index;
     if (!vector_size(docs_index)) {
@@ -116,10 +116,11 @@ void search_show_docs(Vector docs_index, Index forward) {
         if (__i > 9) {
             break;
         }
+        double *sum = vector_at(tfidf, __i);
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
-        printf("index: %d \t path: %s \t class: %s\n", *doc_index, path, class);
+        printf("# %d \t %s \t %s \t %.2lf\n", *doc_index, path, class, *sum);
     }
 }
 
@@ -128,6 +129,7 @@ void search_engine(Index inverted, Index forward) {
     Vector words_input = get_words_input();
     Vector values = vector_new();
     Vector docs_index = vector_new();
+    Vector tfidf = vector_new();
     char *word_input, doc_index[2048];
     double sum;
     Index_Map im;
@@ -153,10 +155,12 @@ void search_engine(Index inverted, Index forward) {
             break;
         }
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
+        vector_push(tfidf, new_double(*(double *)pair_second(p)));
     }
-    search_show_docs(docs_index, forward);
+    search_show_docs(docs_index, tfidf, forward);
     vector_destroy(words_input, free);
     vector_destroy(docs_index, free);
+    vector_destroy(tfidf, free);
     vector_destroy(values, generic_free2(pair_destroy, free, free));
 }
 
@@ -294,9 +298,10 @@ void word_report(Index inverted, Index forward) {
     }
     printf("info: '%s' appeared in %d docs.\n", word, map_size(im));
     Index_Item ii;
-    void *_;
-    map_for(_, ii, im) {
-        Pair p = pair_new(new_int(__i), new_int(index_item_freq(ii)));
+    char *doc_index;
+    map_for(doc_index, ii, im) {
+        Pair p =
+            pair_new(new_int(atoi(doc_index)), new_int(index_item_freq(ii)));
         vector_push(values, p);
     }
     Pair p;
@@ -305,8 +310,11 @@ void word_report(Index inverted, Index forward) {
         if (__i > 9) {
             break;
         }
+        printf("%d\n", *(int *)pair_first(p));
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
     }
+    index_show(inverted);
+    index_show(forward);
     word_report_show(docs_index, inverted, forward, word);
     vector_destroy(docs_index, free);
     vector_destroy(values, generic_free2(pair_destroy, free, free));
