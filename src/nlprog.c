@@ -31,6 +31,7 @@ void search_engine(Index inverted, Index forward);
 
 // classifier
 
+void classifier_show(Vector docs_index, Index forward);
 void classifier(Index inverted, Index forward, int k);
 
 // doc report
@@ -161,16 +162,37 @@ void search_engine(Index inverted, Index forward) {
 
 // classifier
 
-void classifier(Index inverted, Index forward, int k) {
-    printf("Type the text: ");
-    Vector words_expected = get_words_input();
-    // Index_Map index_text = map_new();
-    // to do
-    // get_index_text(index_text, words_expected);
-    // generate_tfidf(index_text);
+void classifier_show(Vector docs_index, Index forward) {
+    char path[2048], class[2048];
+    int *doc_index;
+    if (!vector_size(docs_index)) {
+        printf("info: no results.\n");
+        return;
+    }
+    vector_for(doc_index, docs_index) {
+        Pair p = index_at(forward, *doc_index);
+        char *path_class = pair_first(p);
+        sscanf(path_class, "%[^,],%s", path, class);
+        printf("path: %s \t class: %s\n", path, class);
+    }
+}
 
-    // map_destroy()
-    vector_destroy(words_expected, free);
+void classifier(Index inverted, Index forward, int k) {
+    if (k > index_size(forward)) {
+        printf("warn: k is greater than number of docs.\n");
+        return;
+    }
+
+    printf("type the text: ");
+    Vector words_input = get_words_input();
+    Vector docs_index = vector_new();
+
+    vector_push(docs_index, new_int(0));
+    printf("\nK-Nearest Neighbors - KNN\n\n");
+    classifier_show(docs_index, forward);
+
+    vector_destroy(docs_index, free);
+    vector_destroy(words_input, free);
 }
 
 // doc report
