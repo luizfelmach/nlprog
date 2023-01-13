@@ -33,12 +33,15 @@ void search_engine(Index inverted, Index forward);
 void classifier(Index inverted, Index forward);
 
 // word report
-void words_report(Index inverted, Index forward);
+void word_report_show(Vector docs_index, Index inverted, Index forward,
+                      char *word);
+void word_report(Index inverted, Index forward);
 void show_word_report(Index forward, Map values, char *word);
 void show_word(int index, char *key, Index_Item ii);
 
 // doc report
-void doc_report(Index index, data_cmp fn);
+void doc_report_show(Vector docs_index, Index forward);
+void doc_report(Index forward);
 void show_document(Vector v);
 
 void show_class(char *siggle);
@@ -66,7 +69,9 @@ int main(int argc, char *argv[]) {
     Index inverted = index_load(file_indexes);
     Index forward = index_load(file_indexes);
 
-    search_engine(inverted, forward);
+    // search_engine(inverted, forward);
+    word_report(inverted, forward);
+    // doc_report(forward);
 
     // printf("\n\n########################################################\n\n");
     // printf("\n----------------------- inverted -----------------------\n\n");
@@ -173,40 +178,6 @@ void search_engine(Index inverted, Index forward) {
 
 // classifier
 
-void get_index_text(Index index, Vector text) {
-    char *word, doc[2048], *path;
-    int i;
-    for (i = 0; i < vector_size(text); i++) {
-        word = vector_at(text, i);
-        index_add(index, word, "0", 1);
-    }
-}
-
-double calculate_tfidf(int freq_p_in_d, int n_docs_p_appeared) {
-    double tfidf;
-    tfidf = log((double)(1 + 1) / (double)(1 + n_docs_p_appeared));
-    tfidf += 1;
-    tfidf *= freq_p_in_d;
-    return tfidf;
-}
-
-void generate_tfidf(Index inverted) {
-    Pair p1, p2;
-    Index_Item di;
-    Map value;
-    double tfidf;
-    int i, j, len_docs;
-    for (i = 0; i < index_size(inverted); i++) {
-        p1 = index_at(inverted, i);
-        value = pair_second(p1);
-
-        p2 = map_at(value, 0);
-        di = pair_second(p2);
-        tfidf = calculate_tfidf(index_item_freq(di), 1);
-        index_set_tfidf(di, tfidf);
-    }
-}
-
 void classifier(Index inverted, Index forward) {
     printf("Type the text: ");
     Vector words_expected = get_words_input();
@@ -219,86 +190,124 @@ void classifier(Index inverted, Index forward) {
     vector_destroy(words_expected, free);
 }
 
-void doc_report(Index index, data_cmp fn) {
-    Vector v = vector_new();
-    int i, j;
-    for (i = 0; i < index_size(index); i++) {
-        Pair p = index_at(index, i);    // nesse documento
-        Index_Map im = pair_second(p);  // todas as palavras
+// doc report
+
+void doc_report_show(Vector docs_index, Index forward) {
+    char path[2048], class[2048];
+    int *doc_index;
+    if (!vector_size(docs_index)) {
+        printf("info: nothing to show.\n");
+        return;
+    }
+    vector_for(doc_index, docs_index) {
+        if (__i > 9) {
+            break;
+        }
+        Pair p = index_at(forward, *doc_index);
+        char *path_class = pair_first(p);
+        sscanf(path_class, "%[^,],%s", path, class);
+        printf("index: %d \t path: %s \t class: %s\n", *doc_index, path, class);
+    }
+}
+
+void doc_report(Index forward) {
+    Vector values = vector_new();
+
+    Vector docs_index_asc = vector_new();
+    Vector docs_index_desc = vector_new();
+
+    Index_Map im;
+    void *_;
+    index_for(_, im, forward) {
         double sum = 0;
-        for (j = 0; j < map_size(im); j++) {
-            Pair p2 = map_at(im, j);
-            Index_Item ii = pair_second(p2);
+        Index_Item ii;
+        map_for(_, ii, im) {
             sum += index_item_freq(ii);
         }
-        char index[2048];
-        sprintf(index, "%d,%s", i, (char *)pair_first(p));  // index e name
-        Pair values = pair_new(new_string(index), new_int(sum));
-        vector_push(v, values);
+        Pair p = pair_new(new_int(__i), new_int(sum));
+        vector_push(values, p);
     }
-    vector_sort(v, fn);
-    show_document(v);
-    vector_destroy(
-        v, call(void, (void *data), { pair_destroy(data, free, free); }));
+
+    Pair p;
+    vector_sort(values, crescent_int_sort);
+    vector_for(p, values) {
+        if (__i > 9) {
+            break;
+        }
+        vector_push(docs_index_asc, new_int(*(int *)pair_first(p)));
+    }
+
+    vector_sort(values, decrescent_int_sort);
+    vector_for(p, values) {
+        if (__i > 9) {
+            break;
+        }
+        vector_push(docs_index_desc, new_int(*(int *)pair_first(p)));
+    }
+
+    printf("\nasc order\n");
+    doc_report_show(docs_index_asc, forward);
+    printf("\ndesc order\n");
+    doc_report_show(docs_index_desc, forward);
+
+    vector_destroy(docs_index_asc, free);
+    vector_destroy(docs_index_desc, free);
+    vector_destroy(values, generic_free2(pair_destroy, free, free));
 }
 
-void show_document(Vector v) {
-    int i;
-    for (i = 0; i < vector_size(v) && i < 10; i++) {
-        Pair p = vector_at(v, i);
-        char index[2048];
-        char doc[2048];
-        char class[2048];
-        int *total = pair_second(p);
-        sscanf((char *)pair_first(p), "%[^,],%[^,],%s", index, doc, class);
+// word report
 
-        printf("index: %s \t doc: %s \t ", index, doc);
-        show_class(class);
-        printf("\t words: %.d\n", *total);
+void word_report_show(Vector docs_index, Index inverted, Index forward,
+                      char *word) {
+    char path[2048], class[2048];
+    int *doc_index;
+    if (!vector_size(docs_index)) {
+        printf("info: nothing to show.\n");
+        return;
+    }
+    vector_for(doc_index, docs_index) {
+        if (__i > 9) {
+            break;
+        }
+        Pair p = index_at(forward, *doc_index);
+        char *path_class = pair_first(p);
+        sscanf(path_class, "%[^,],%s", path, class);
+        printf("index: %d \t path: %s \t class: %s\n", *doc_index, path, class);
     }
 }
 
-void show_word(int index, char *key, Index_Item ii) {
-    char doc[2048];
-    char class[2048];
-    sscanf(key, "%[^,],%s", doc, class);
-
-    printf("index: %d \t doc: %s \t ", index, doc);
-    show_class(class);
-    printf(" \t ");
-    index_item_show(ii);
-}
-
-void show_word_report(Index forward, Map values, char *word) {
-    printf("\nTotal words: %d\n\n", map_size(values));
-
-    for (int i = 0; i < map_size(values) && i < 10; i++) {
-        // get all document indexes and itens of list
-        Pair p = map_at(values, i);
-        int idx = atoi(pair_first(p));
-        Index_Item ii = pair_second(p);
-
-        // finding in forward the name and class of doc
-        Pair p2 = index_at(forward, idx);
-        show_word(idx, pair_first(p2), ii);
-    }
-}
-
-void words_report(Index inverted, Index forward) {
+void word_report(Index inverted, Index forward) {
     printf("Search a word: ");
     char word[2048];
     scanf("%s%*c", word);
-
-    Map values = index_get(inverted, word);
-
-    if (!values) {
-        printf("\nWord doesn't exists!!\n\n");
-    } else {
-        map_sort(values, decrescent_item_freq_sort);
-        show_word_report(forward, values, word);
-        // to do lista de frequencia de palavras por classe
+    Index_Map im = index_get(inverted, word);
+    Vector docs_index = vector_new();
+    Vector values = vector_new();
+    if (!im) {
+        printf("info: word does not exists.\n");
+        return;
     }
+    printf("info: '%s' appeared in %d docs.\n", word, map_size(im));
+    Index_Item ii;
+    void *_;
+    map_for(_, ii, im) {
+        Pair p = pair_new(new_int(__i), new_int(index_item_freq(ii)));
+        vector_push(values, p);
+    }
+    Pair p;
+    vector_sort(values, crescent_int_sort);
+    vector_for(p, values) {
+        if (__i > 9) {
+            break;
+        }
+        vector_push(docs_index, new_int(*(int *)pair_first(p)));
+    }
+    word_report_show(docs_index, inverted, forward, word);
+    vector_destroy(docs_index, free);
+    vector_destroy(values, generic_free2(pair_destroy, free, free));
 }
+
+// ...
 
 void show_class(char *siggle) {
     if (!siggle) {
@@ -315,4 +324,15 @@ void show_class(char *siggle) {
             printf("--       ");
         }
     }
+}
+
+void show_word(int index, char *key, Index_Item ii) {
+    char doc[2048];
+    char class[2048];
+    sscanf(key, "%[^,],%s", doc, class);
+
+    printf("index: %d \t doc: %s \t ", index, doc);
+    show_class(class);
+    printf(" \t ");
+    index_item_show(ii);
 }
