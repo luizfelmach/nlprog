@@ -290,12 +290,13 @@ void word_report(Index inverted, Index forward) {
     char word[2048];
     scanf("%s%*c", word);
     Index_Map im = index_get(inverted, word);
-    Vector docs_index = vector_new();
-    Vector values = vector_new();
     if (!im) {
         printf("info: word does not exists.\n");
         return;
     }
+
+    Vector docs_index = vector_new();
+    Vector values = vector_new();
     printf("info: '%s' appeared in %d docs.\n", word, map_size(im));
     Index_Item ii;
     char *doc_index;
@@ -305,7 +306,7 @@ void word_report(Index inverted, Index forward) {
         vector_push(values, p);
     }
     Pair p;
-    vector_sort(values, crescent_int_sort);
+    vector_sort(values, decrescent_int_sort);
     vector_for(p, values) {
         if (__i > 9) {
             break;
@@ -313,8 +314,6 @@ void word_report(Index inverted, Index forward) {
         printf("%d\n", *(int *)pair_first(p));
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
     }
-    index_show(inverted);
-    index_show(forward);
     word_report_show(docs_index, inverted, forward, word);
     vector_destroy(docs_index, free);
     vector_destroy(values, generic_free2(pair_destroy, free, free));
