@@ -8,18 +8,6 @@
 #include <string.h>
 #include <vector.h>
 
-char *siggles[22] = {"at2", "bro", "cid", "cit", "con2", "eco", "ept",
-                     "esp", "fam", "imo", "inf", "int",  "mic", "mul",
-                     "opi", "poc", "pot", "reg", "sro",  "tav", "tvt"};
-
-char *classes[22] = {"at2       ",           "Qual a Bronca", "Cidades    ",
-                     "Ciencia e Tecnologia", "Concursos ",    "Economia   ",
-                     "Esportes   ",          "Especial  ",    "Familia   ",
-                     "Imoveis    ",          "Informatica",   "Internacional",
-                     "Minha Casa",           "Mulher     ",   "Opiniao    ",
-                     "Policia    ",          "Politica  ",    "Regional   ",
-                     "Sobre Rodas",          "Tudo a Ver ",   "TV Tudo   "};
-
 // nlprog
 
 Vector get_words_input(char *label);
@@ -47,9 +35,6 @@ void word_report_show(Vector docs_index, Index inverted, Index forward,
 void word_report(Index inverted, Index forward);
 void show_word_report(Index forward, Map values, char *word);
 void show_word(int index, char *key, Index_Item ii);
-
-// ...
-void show_class(char *siggle);
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
@@ -315,34 +300,4 @@ void word_report(Index inverted, Index forward) {
     word_report_show(docs_index, inverted, forward, word);
     vector_destroy(docs_index, free);
     vector_destroy(values, generic_free2(pair_destroy, free, free));
-}
-
-// ...
-
-void show_class(char *siggle) {
-    if (!siggle) {
-        printf("NULL \t ");
-    } else {
-        int i;
-        for (i = 0; i < 21; i++) {
-            if (strcmp(siggle, siggles[i]) == 0) {
-                printf("%s", classes[i]);
-                break;
-            }
-        }
-        if (i == 21) {
-            printf("--       ");
-        }
-    }
-}
-
-void show_word(int index, char *key, Index_Item ii) {
-    char doc[2048];
-    char class[2048];
-    sscanf(key, "%[^,],%s", doc, class);
-
-    printf("index: %d \t doc: %s \t ", index, doc);
-    show_class(class);
-    printf(" \t ");
-    index_item_show(ii);
 }
