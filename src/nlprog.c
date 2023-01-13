@@ -20,6 +20,8 @@ char *classes[22] = {"at2       ",           "Qual a Bronca", "Cidades    ",
                      "Policia    ",          "Politica  ",    "Regional   ",
                      "Sobre Rodas",          "Tudo a Ver ",   "TV Tudo   "};
 
+// nlprog
+
 Vector get_words_input();
 
 // search engine
@@ -97,7 +99,24 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-// classifier
+// nlprog
+
+Vector get_words_input() {
+    Vector words_input = vector_new();
+    char *word = NULL;
+    size_t len = 0;
+    int tam = getline(&word, &len, stdin);
+    word[tam - 1] = '\0';
+    char *token = strtok(word, " ");
+    while (token) {
+        vector_push(words_input, new_string(token));
+        token = strtok(NULL, " ");
+    }
+    free(word);
+    return words_input;
+}
+
+// search engine
 
 void search_show_docs(Vector docs_index, Index forward) {
     char path[2048], class[2048];
@@ -116,6 +135,45 @@ void search_show_docs(Vector docs_index, Index forward) {
         printf("index: %d \t path: %s \t class: %s\n", *doc_index, path, class);
     }
 }
+
+void search_engine(Index inverted, Index forward) {
+    printf("Search engine: ");
+    Vector words_input = get_words_input();
+    Vector values = vector_new();
+    Vector docs_index = vector_new();
+    char *word_input, doc_index[2048];
+    double sum;
+    Index_Map im;
+    void *_;
+    index_for(_, im, forward) {
+        sum = 0;
+        sprintf(doc_index, "%d", __i);
+        vector_for(word_input, words_input) {
+            Index_Item ii = index_get_get(inverted, word_input, doc_index);
+            if (ii) {
+                sum += index_item_tfidf(ii);
+            }
+        }
+        if (sum > 0) {
+            Pair p = pair_new(new_int(__i), new_double(sum));
+            vector_push(values, p);
+        }
+    }
+    vector_sort(values, decrescent_double_sort);
+    Pair p;
+    vector_for(p, values) {
+        if (__i > 9) {
+            break;
+        }
+        vector_push(docs_index, new_int(*(int *)pair_first(p)));
+    }
+    search_show_docs(docs_index, forward);
+    vector_destroy(words_input, free);
+    vector_destroy(docs_index, free);
+    vector_destroy(values, generic_free2(pair_destroy, free, free));
+}
+
+// classifier
 
 void get_index_text(Index index, Vector text) {
     char *word, doc[2048], *path;
@@ -161,84 +219,6 @@ void classifier(Index inverted, Index forward) {
 
     // map_destroy()
     vector_destroy(words_expected, free);
-}
-
-Vector get_words_input() {
-    Vector w = vector_new();
-    char *word = NULL;
-    size_t len = 0;
-
-    int tam = getline(&word, &len, stdin);
-    word[tam - 1] = '\0';
-
-    char *token = strtok(word, " ");
-    while (token) {
-        vector_push(w, new_string(token));
-        token = strtok(NULL, " ");
-    }
-
-    free(word);
-    return w;
-}
-
-void show_search_document(Vector v) {
-    int i;
-    for (i = 0; i < vector_size(v) && i < 10; i++) {
-        Pair p = vector_at(v, i);
-        char index[2048];
-        char doc[2048];
-        char class[2048];
-        double *total = pair_second(p);
-        sscanf((char *)pair_first(p), "%[^,],%[^,],%s", index, doc, class);
-
-        printf("index: %s \t doc: %s \t ", index, doc);
-        show_class(class);
-        printf("\t tf-idf total: %.2lf\n", *total);
-    }
-}
-
-void search_engine(Index inverted, Index forward) {
-    printf("Search engine: ");
-
-    Vector words_input = get_words_input();
-    Vector values = vector_new();
-    Vector docs_index = vector_new();
-
-    char *word_input, doc_index[2048];
-    double sum;
-    Index_Map im;
-    void *_;
-    index_for(_, im, forward) {
-        sum = 0;
-        sprintf(doc_index, "%d", __i);
-        vector_for(word_input, words_input) {
-            Index_Item ii = index_get_get(inverted, word_input, doc_index);
-            if (ii) {
-                sum += index_item_tfidf(ii);
-            }
-        }
-        if (sum > 0) {
-            Pair p = pair_new(new_int(__i), new_double(sum));
-            vector_push(values, p);
-        }
-    }
-
-    vector_sort(values, decrescent_double_sort);
-
-    Pair p;
-    vector_for(p, values) {
-        if (__i > 9) {
-            break;
-        }
-        vector_push(docs_index, new_int(*(int *)pair_first(p)));
-    }
-
-    search_show_docs(docs_index, forward);
-
-    vector_destroy(words_input, free);
-    vector_destroy(docs_index, free);
-    vector_destroy(
-        values, call(void, (void *data), { pair_destroy(data, free, free); }));
 }
 
 void doc_report(Index index, data_cmp fn) {
