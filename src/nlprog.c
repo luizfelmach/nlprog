@@ -30,14 +30,17 @@ void search_show_docs(Vector docs_index, Index forward);
 void search_engine(Index inverted, Index forward);
 
 // classifier
+
 void classifier(Index inverted, Index forward, int k);
 
 // doc report
+
 void doc_report_show(Vector docs_index, Index forward);
 void doc_report(Index forward);
 void show_document(Vector v);
 
 // word report
+
 void word_report_show(Vector docs_index, Index inverted, Index forward,
                       char *word);
 void word_report(Index inverted, Index forward);
