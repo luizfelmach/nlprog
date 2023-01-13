@@ -1,4 +1,5 @@
 #include <algo.h>
+#include <classname_map.h>
 #include <index.h>
 #include <map.h>
 #include <math.h>
@@ -11,11 +12,14 @@
 // nlprog
 
 void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k);
+void destroy_pair_inside_vector(void *data);
 Vector get_words_input(char *label);
 
 // search engine
 
 void search_show_docs(Vector docs_index, Vector tfidf, Index forward);
+void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
+                      Vector values);
 void search_engine(Index inverted, Index forward);
 
 // classifier
@@ -40,7 +44,7 @@ int main(int argc, char *argv[]) {
     Index inverted, forward;
     setup(argc, argv, &inverted, &forward, &k);
 
-    // search_engine(inverted, forward);
+    search_engine(inverted, forward);
     // classifier(inverted, forward, 10);
     // word_report(inverted, forward);
     // doc_report(forward);
@@ -68,6 +72,10 @@ void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k) {
     fclose(file_indexes);
 }
 
+void destroy_pair_inside_vector(void *data) {
+    pair_destroy(data, free, free);
+}
+
 Vector get_words_input(char *label) {
     printf("%s", label);
     Vector words_input = vector_new();
@@ -89,6 +97,8 @@ Vector get_words_input(char *label) {
 void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
     char path[2048], class[2048];
     int *doc_index;
+    printf("\n");
+
     if (!vector_size(docs_index)) {
         printf("info: the search returned no results.\n");
         return;
@@ -97,25 +107,27 @@ void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
         if (__i > 9) {
             break;
         }
+
         double *sum = vector_at(tfidf, __i);
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
-        printf("# %d \t %s \t %s \t %.2lf\n", *doc_index, path, class, *sum);
+        const char *classname = classname_map_get(class);
+
+        printf("# %5d \t", *doc_index);
+        printf("%12s \t", classname);
+        printf("%.2lf \t", *sum);
+        printf("%s\n", path);
     }
 }
 
-void search_engine(Index inverted, Index forward) {
-    Vector words_input = get_words_input("search engine: ");
-    Vector values = vector_new();
-    Vector docs_index = vector_new();
-    Vector tfidf = vector_new();
+void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
+                      Vector values) {
     char *word_input, doc_index[2048];
-    double sum;
     Index_Map im;
     void *_;
     index_for(_, im, forward) {
-        sum = 0;
+        double sum = 0;
         sprintf(doc_index, "%d", __i);
         vector_for(word_input, words_input) {
             Index_Item ii = index_get_get(inverted, word_input, doc_index);
@@ -128,7 +140,19 @@ void search_engine(Index inverted, Index forward) {
             vector_push(values, p);
         }
     }
+}
+
+void search_engine(Index inverted, Index forward) {
+    printf("\n............ search engine ............\n\n");
+
+    Vector words_input = get_words_input("search: ");
+    Vector docs_index = vector_new();
+    Vector tfidf = vector_new();
+    Vector values = vector_new();
+
+    search_sum_tfidf(inverted, forward, words_input, values);
     vector_sort(values, decrescent_double_sort);
+
     Pair p;
     vector_for(p, values) {
         if (__i > 9) {
@@ -137,11 +161,13 @@ void search_engine(Index inverted, Index forward) {
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
         vector_push(tfidf, new_double(*(double *)pair_second(p)));
     }
+
     search_show_docs(docs_index, tfidf, forward);
+
     vector_destroy(words_input, free);
     vector_destroy(docs_index, free);
     vector_destroy(tfidf, free);
-    vector_destroy(values, generic_free2(pair_destroy, free, free));
+    vector_destroy(values, destroy_pair_inside_vector);
 }
 
 // classifier
