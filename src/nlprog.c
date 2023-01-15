@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
 void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k) {
     if (argc < 3) {
-        printf("error: missing parameters.\n");
+        printf("usage: ./nlprog <path> <number>.\n");
         exit(1);
     }
     FILE *file_indexes = fopen(argv[1], "rb");
