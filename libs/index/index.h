@@ -44,6 +44,8 @@ void index_insert(Index index, char *key);
 void index_sort(Index index, data_cmp cmp);
 void index_show(Index index);
 int index_size(Index index);
+double index_calculate_tfidf(int freq_p_in_d, int n_docs_p_appeared,
+                             int total_docs);
 
 Pair index_at(Index index, int pos);
 Index_Map index_get(Index index, char *key);

@@ -1,6 +1,7 @@
 #include <algo.h>
 #include <index.h>
 #include <map.h>
+#include <math.h>
 #include <pair.h>
 #include <primitive.h>
 #include <stdio.h>
@@ -152,6 +153,15 @@ void index_show(Index index) {
 
 int index_size(Index index) {
     return map_size(index->data);
+}
+
+double index_calculate_tfidf(int freq_p_in_d, int n_docs_p_appeared,
+                             int total_docs) {
+    double tfidf;
+    tfidf = log((double)(1 + total_docs) / (double)(1 + n_docs_p_appeared));
+    tfidf += 1;
+    tfidf *= freq_p_in_d;
+    return tfidf;
 }
 
 Pair index_at(Index index, int pos) {

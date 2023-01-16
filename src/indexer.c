@@ -17,7 +17,6 @@ void get_inverted(Index inverted, Vector path_docs);
 void get_forward(Index forward, Index inverted, Vector path_docs,
                  Vector class_docs);
 void generate_tfidf(Index inverted, Index forward);
-double calculate_tfidf(int freq_p_in_d, int n_docs_p_appeared);
 int inverted_sort(const void *d1, const void *d2);
 
 int main(int argc, char *argv[]) {
@@ -182,19 +181,12 @@ void generate_tfidf(Index inverted, Index forward) {
         sprintf(word_index, "%d", __i);
         map_for(doc_index, di_inverted, value) {
             di_forward = index_at_get(forward, atoi(doc_index), word_index);
-            tfidf = calculate_tfidf(index_item_freq(di_inverted), len_docs);
+            tfidf = index_calculate_tfidf(index_item_freq(di_inverted),
+                                          len_docs, total_docs);
             index_set_tfidf(di_inverted, tfidf);
             index_set_tfidf(di_forward, tfidf);
         }
     }
-}
-
-double calculate_tfidf(int freq_p_in_d, int n_docs_p_appeared) {
-    double tfidf;
-    tfidf = log((double)(1 + total_docs) / (double)(1 + n_docs_p_appeared));
-    tfidf += 1;
-    tfidf *= freq_p_in_d;
-    return tfidf;
 }
 
 int inverted_sort(const void *d1, const void *d2) {
