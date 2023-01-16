@@ -44,10 +44,10 @@ int main(int argc, char *argv[]) {
     Index inverted, forward;
     setup(argc, argv, &inverted, &forward, &k);
 
-    search_engine(inverted, forward);
+    //search_engine(inverted, forward);
     classifier(inverted, forward, k);
-    doc_report(forward);
-    word_report(inverted, forward);
+    //doc_report(forward);
+    //word_report(inverted, forward);
 
     index_destroy(inverted);
     index_destroy(forward);
@@ -187,35 +187,61 @@ void classifier_show(Vector docs_index, Index forward) {
     }
 }
 
+double magnetude(Vector v) {
+    double sum = 0; 
+    int *a;
+    // double *a;
+    vector_for(a, v){
+        sum += pow(*a,2);
+    }
+    return sqrt(sum);
+}
+
+double escalar(Vector v1, Vector v2) {
+    int *a, *b;
+    // double *a, *b;
+    double sum = 0;
+    vector_for(a, v1) {
+        b = vector_at(v2, __i);
+        sum += (*a) * (*b);
+    }
+    return sum;
+}
+
+double distance(Vector v1, Vector v2) {
+    return escalar(v1,v2)/(magnetude(v1)*magnetude(v2));
+}
+
 double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
                                          int index_doc) {
-    Index_Item ii;
-    Pair p;
+    Vector tf_idf_text = vector_new();
+    Vector tf_idf_notice = vector_new();
     char *word;
-    int freq_text = 0;
-    int freq_notice = 0;
-    double norm_text = 0;
-    double norm_notice = 0;
+    Index_Item di_inverted;
+    Index_Item di_words_index;
+    Pair p;
+    int tf_idf; 
+    // double tf_idf;
     double cos = 0;
-    double scalar = 0;
-    map_for(word, ii, words_index) {
-        // quero pegar o pair de dados da palavra word_imput no documento __i
+
+    map_for(word, di_words_index, words_index) {
         p = index_get_at(inverted, word, index_doc);
-        // se essa palavra existir nesse documento
         if (p) {
-            // capturei a frequencia dessa palavra no index
-            ii = pair_second(p);
-            freq_notice = index_item_freq(ii);
-            ii = map_get(words_index, word);
-            freq_text = index_item_freq(ii);
-            // calculo da distancia
-            scalar += freq_text * freq_notice;
-            norm_text += pow(freq_text, 2);
-            norm_notice += pow(freq_notice, 2);
-            printf("\n freq %d %d\n", freq_text, freq_notice);
+            di_inverted = pair_second(p);
+            tf_idf = index_item_freq(di_inverted);
+            vector_push(tf_idf_notice, new_int(tf_idf));
+            tf_idf = index_item_freq(di_words_index);
+            vector_push(tf_idf_text, new_int(tf_idf));
         }
     }
-    cos = scalar / (sqrt(norm_text) * sqrt(norm_notice));
+
+    if(vector_size(tf_idf_notice) < 1){
+        return -2;
+    }
+    cos = distance(tf_idf_text, tf_idf_notice);
+
+    vector_destroy(tf_idf_text, free);
+    vector_destroy(tf_idf_notice, free);
     return cos;
 }
 
@@ -229,32 +255,30 @@ void classifier(Index inverted, Index forward, int k) {
 
     // gerar um indice de palavras ?
     Index_Item ii;
-    Index_Map im;
     Index_Map words_index = map_new();
     Vector docs_index = vector_new();
-    int idx;
     char *word_input;
-    char *key;
-    Pair p;
+    void *_, *__;
+    
+
     vector_for(word_input, words_input) {
-        im = index_get(inverted, word_input);
-        // se essa palavra existir em pelo menos um documento do index
-        if (im) {
-            // vai setando a frequencia
-            index_map_add(words_index, word_input, 1);
-        }
+        // vai setando a frequencia
+        index_map_add(words_index, word_input, 1);
     }
 
     // teste exibicao, retirar depois
-    map_for(key, ii, words_index) {
-        printf("key: %s \t", key);
+    map_for(word_input, ii, words_index) {
+        printf("key: %s \t", word_input);
         index_item_show(ii);
         printf("\n");
     }
 
     // calcular a distancia
-    index_for(key, im, forward) {  // para cada documento __i é o indice atual
-        printf("\nindex: %d cos: %lf\n",__i, calculate_distance_text_to_notice(inverted, words_index, __i));
+    index_for(_,__, forward){
+        double cos = calculate_distance_text_to_notice(inverted, words_index, __i);
+        if(cos != -2){
+           printf("index: %d, cos %lf\n", __i, cos);
+        }
     }
 
     vector_push(docs_index, new_int(0));
