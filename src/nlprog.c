@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     setup(argc, argv, &inverted, &forward, &k);
 
     search_engine(inverted, forward);
-    // classifier(inverted, forward, 10);
+    classifier(inverted, forward, k);
     doc_report(forward);
     word_report(inverted, forward);
 
@@ -187,6 +187,38 @@ void classifier_show(Vector docs_index, Index forward) {
     }
 }
 
+double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
+                                         int index_doc) {
+    Index_Item ii;
+    Pair p;
+    char *word;
+    int freq_text = 0;
+    int freq_notice = 0;
+    double norm_text = 0;
+    double norm_notice = 0;
+    double cos = 0;
+    double scalar = 0;
+    map_for(word, ii, words_index) {
+        // quero pegar o pair de dados da palavra word_imput no documento __i
+        p = index_get_at(inverted, word, index_doc);
+        // se essa palavra existir nesse documento
+        if (p) {
+            // capturei a frequencia dessa palavra no index
+            ii = pair_second(p);
+            freq_notice = index_item_freq(ii);
+            ii = map_get(words_index, word);
+            freq_text = index_item_freq(ii);
+            // calculo da distancia
+            scalar += freq_text * freq_notice;
+            norm_text += pow(freq_text, 2);
+            norm_notice += pow(freq_notice, 2);
+            printf("\n freq %d %d\n", freq_text, freq_notice);
+        }
+    }
+    cos = scalar / (sqrt(norm_text) * sqrt(norm_notice));
+    return cos;
+}
+
 void classifier(Index inverted, Index forward, int k) {
     if (k > index_size(forward)) {
         printf("warn: k is greater than number of docs.\n");
@@ -194,12 +226,42 @@ void classifier(Index inverted, Index forward, int k) {
     }
 
     Vector words_input = get_words_input("type the text: ");
+
+    // gerar um indice de palavras ?
+    Index_Item ii;
+    Index_Map im;
+    Index_Map words_index = map_new();
     Vector docs_index = vector_new();
+    int idx;
+    char *word_input;
+    char *key;
+    Pair p;
+    vector_for(word_input, words_input) {
+        im = index_get(inverted, word_input);
+        // se essa palavra existir em pelo menos um documento do index
+        if (im) {
+            // vai setando a frequencia
+            index_map_add(words_index, word_input, 1);
+        }
+    }
+
+    // teste exibicao, retirar depois
+    map_for(key, ii, words_index) {
+        printf("key: %s \t", key);
+        index_item_show(ii);
+        printf("\n");
+    }
+
+    // calcular a distancia
+    index_for(key, im, forward) {  // para cada documento __i é o indice atual
+        printf("\nindex: %d cos: %lf\n",__i, calculate_distance_text_to_notice(inverted, words_index, __i));
+    }
 
     vector_push(docs_index, new_int(0));
     printf("\nK-Nearest Neighbors - KNN\n\n");
     classifier_show(docs_index, forward);
 
+    map_destroy(words_index, free, free);
     vector_destroy(docs_index, free);
     vector_destroy(words_input, free);
 }
