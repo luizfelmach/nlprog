@@ -210,44 +210,28 @@ double classifier_distance(Index inverted, Index_Map words_index,
     map_for(word, di_document, document) {
         Pair p = index_at(inverted, atoi(word));
         char *key = pair_first(p);
-        if (di_document) {
-            di_words_index = map_get(words_index, key);
-            if (di_words_index) {
-                tf_idf = index_item_tfidf(di_words_index);
-            } else {
-                tf_idf = 0;
-            }
-            // printf("%lf \t ", tf_idf);
-            vector_push(tf_idf_text, new_double(tf_idf));
-            tf_idf = index_item_tfidf(di_document);
-            // printf("%lf \n ", tf_idf);
-            vector_push(tf_idf_notice, new_double(tf_idf));
+
+        di_words_index = map_get(words_index, key);
+        if (di_words_index) {
+            tf_idf = index_item_tfidf(di_words_index);
+        } else {
+            tf_idf = 0;
         }
+        vector_push(tf_idf_text, new_double(tf_idf));
+        tf_idf = index_item_tfidf(di_document);
+        vector_push(tf_idf_notice, new_double(tf_idf));
     }
 
     // se nao existe nenhuma palavra em comum
-    double * i, count = 0 ;
-    vector_for(i, tf_idf_text){
-        if(*i!= 0.0){
+    double *i, count = 0;
+    vector_for(i, tf_idf_text) {
+        if (*i != 0.0) {
             count++;
         }
     }
-    if(!count){
+    if (!count) {
         return 0;
     }
-    /*
-    map_for(word, di_words_index, words_index) {
-        // get a word item from the word index of a specific document
-        di_inverted = index_get_get(inverted, word, index_doc);
-        if (di_inverted) {
-            // if word exists in document
-            tf_idf = index_item_tfidf(di_inverted);
-            vector_push(tf_idf_notice, new_double(tf_idf));
-            tf_idf = index_item_tfidf(di_words_index);
-            vector_push(tf_idf_text, new_double(tf_idf));
-        }
-    }
-    */
 
     // calculates the distance between the two vectors
     cos = distance(tf_idf_text, tf_idf_notice);
@@ -300,9 +284,11 @@ void classifier(Index inverted, Index forward, int k) {
     index_for(_, im, forward) {
         sprintf(index_doc, "%d", __i);
         double cos = classifier_distance(inverted, words_index, index_doc, im);
-        p = pair_new(new_int(__i), new_double(cos));
-        vector_push(values, p);
-        printf("%s %lf\n", (char *)pair_first(index_at(forward, __i)), cos);
+        if (cos) {
+            p = pair_new(new_int(__i), new_double(cos));
+            vector_push(values, p);
+        }
+        // printf("%s %lf\n", (char *)pair_first(index_at(forward, __i)), cos);
     }
 
     // sort
