@@ -44,10 +44,10 @@ int main(int argc, char *argv[]) {
     Index inverted, forward;
     setup(argc, argv, &inverted, &forward, &k);
 
-    //search_engine(inverted, forward);
+    // search_engine(inverted, forward);
     classifier(inverted, forward, k);
-    //doc_report(forward);
-    //word_report(inverted, forward);
+    // doc_report(forward);
+    // word_report(inverted, forward);
 
     index_destroy(inverted);
     index_destroy(forward);
@@ -188,19 +188,15 @@ void classifier_show(Vector docs_index, Index forward) {
 }
 
 double magnetude(Vector v) {
-    double sum = 0; 
-    int *a;
-    // double *a;
-    vector_for(a, v){
-        sum += pow(*a,2);
+    double sum = 0, *a;
+    vector_for(a, v) {
+        sum += pow(*a, 2);
     }
     return sqrt(sum);
 }
 
 double escalar(Vector v1, Vector v2) {
-    int *a, *b;
-    // double *a, *b;
-    double sum = 0;
+    double *a, *b, sum = 0;
     vector_for(a, v1) {
         b = vector_at(v2, __i);
         sum += (*a) * (*b);
@@ -209,33 +205,30 @@ double escalar(Vector v1, Vector v2) {
 }
 
 double distance(Vector v1, Vector v2) {
-    return escalar(v1,v2)/(magnetude(v1)*magnetude(v2));
+    return escalar(v1, v2) / (magnetude(v1) * magnetude(v2));
 }
 
 double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
-                                         int index_doc) {
+                                         char *index_doc) {
     Vector tf_idf_text = vector_new();
     Vector tf_idf_notice = vector_new();
-    char *word;
     Index_Item di_inverted;
     Index_Item di_words_index;
-    Pair p;
-    int tf_idf; 
-    // double tf_idf;
+    char *word;
+    double tf_idf;
     double cos = 0;
 
     map_for(word, di_words_index, words_index) {
-        p = index_get_at(inverted, word, index_doc);
-        if (p) {
-            di_inverted = pair_second(p);
-            tf_idf = index_item_freq(di_inverted);
-            vector_push(tf_idf_notice, new_int(tf_idf));
-            tf_idf = index_item_freq(di_words_index);
-            vector_push(tf_idf_text, new_int(tf_idf));
+        di_inverted = index_get_get(inverted, word, index_doc);
+        if (di_inverted) {
+            tf_idf = index_item_tfidf(di_inverted);
+            vector_push(tf_idf_notice, new_double(tf_idf));
+            tf_idf = index_item_tfidf(di_words_index);
+            vector_push(tf_idf_text, new_double(tf_idf));
         }
     }
 
-    if(vector_size(tf_idf_notice) < 1){
+    if (vector_size(tf_idf_notice) < 1) {
         return 0;
     }
     cos = distance(tf_idf_text, tf_idf_notice);
@@ -253,39 +246,58 @@ void classifier(Index inverted, Index forward, int k) {
 
     Vector words_input = get_words_input("type the text: ");
 
-    // gerar um indice de palavras ?
-    Index_Item ii;
-    Index_Map words_index = map_new();
     Vector docs_index = vector_new();
+    Vector values = vector_new();
+    Index_Map words_index = map_new();
+    Index_Map im;
+    Pair p;
+    Index_Item ii;
     char *word_input;
+    char index_doc[2048];
+    double tf_idf;
+    int len_docs;
+    int total_docs = index_size(forward);
     void *_, *__;
-    
+
     // set frequancy
     vector_for(word_input, words_input) {
-        // vai setando a frequencia
         index_map_add(words_index, word_input, 1);
     }
-    
+
     // set tf-idf
-
-    // teste exibicao, retirar depois
     map_for(word_input, ii, words_index) {
-        printf("key: %s \t", word_input);
-        index_item_show(ii);
-        printf("\n");
+        im = index_get(inverted, word_input);
+        if (im) {
+            len_docs = map_size(im);
+        } else {
+            len_docs = 0;
+        }
+        tf_idf =
+            index_calculate_tfidf(index_item_freq(ii), len_docs, total_docs);
+        index_set_tfidf(ii, tf_idf);
     }
-
     // calculate distance
-    index_for(_,__, forward){
-        double cos = calculate_distance_text_to_notice(inverted, words_index, __i);
-        printf("index: %d, cos %lf\n", __i, cos);
-    
+    index_for(_, __, forward) {
+        sprintf(index_doc, "%d", __i);
+        double cos =
+            calculate_distance_text_to_notice(inverted, words_index, index_doc);
+        p = pair_new(new_int(__i), new_double(cos));
+        vector_push(values, p);
     }
 
-    vector_push(docs_index, new_int(0));
+    vector_sort(values, decrescent_double_sort);
+
+    vector_for(p, values) {
+        if (__i > 9) {
+            break;
+        }
+        int idx = *(int *)pair_first(p);
+        vector_push(docs_index, new_int(idx));
+    }
+
     printf("\nK-Nearest Neighbors - KNN\n\n");
     classifier_show(docs_index, forward);
-
+    vector_destroy(values, destroy_pair_inside_vector);
     map_destroy(words_index, free, free);
     vector_destroy(docs_index, free);
     vector_destroy(words_input, free);
