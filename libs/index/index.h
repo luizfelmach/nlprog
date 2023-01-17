@@ -18,7 +18,7 @@ typedef struct _index *Index;
 
 // index_item
 
-// Index_Item index_item_new(int freq, double tf_idf); // Private
+Index_Item index_item_new(int freq, double tf_idf); // Private
 void index_item_set(Index_Item ii, int freq, double tf_idf);
 void index_set_freq(Index_Item ii, int freq);
 void index_set_tfidf(Index_Item ii, double tf_idf);

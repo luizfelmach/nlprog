@@ -44,10 +44,10 @@ int main(int argc, char *argv[]) {
     Index inverted, forward;
     setup(argc, argv, &inverted, &forward, &k);
 
-    search_engine(inverted, forward);
-    // classifier(inverted, forward, 10);
-    doc_report(forward);
-    word_report(inverted, forward);
+    //search_engine(inverted, forward);
+    classifier(inverted, forward, k);
+    //doc_report(forward);
+    //word_report(inverted, forward);
 
     index_destroy(inverted);
     index_destroy(forward);
@@ -187,6 +187,64 @@ void classifier_show(Vector docs_index, Index forward) {
     }
 }
 
+double magnetude(Vector v) {
+    double sum = 0; 
+    int *a;
+    // double *a;
+    vector_for(a, v){
+        sum += pow(*a,2);
+    }
+    return sqrt(sum);
+}
+
+double escalar(Vector v1, Vector v2) {
+    int *a, *b;
+    // double *a, *b;
+    double sum = 0;
+    vector_for(a, v1) {
+        b = vector_at(v2, __i);
+        sum += (*a) * (*b);
+    }
+    return sum;
+}
+
+double distance(Vector v1, Vector v2) {
+    return escalar(v1,v2)/(magnetude(v1)*magnetude(v2));
+}
+
+double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
+                                         int index_doc) {
+    Vector tf_idf_text = vector_new();
+    Vector tf_idf_notice = vector_new();
+    char *word;
+    Index_Item di_inverted;
+    Index_Item di_words_index;
+    Pair p;
+    int tf_idf; 
+    // double tf_idf;
+    double cos = 0;
+
+    map_for(word, di_words_index, words_index) {
+        p = index_get_at(inverted, word, index_doc);
+        if (p) {
+            di_inverted = pair_second(p);
+            tf_idf = index_item_freq(di_inverted);
+            vector_push(tf_idf_notice, new_int(tf_idf));
+            tf_idf = index_item_freq(di_words_index);
+            vector_push(tf_idf_text, new_int(tf_idf));
+        }
+    }
+
+    if(vector_size(tf_idf_notice) < 1){
+        return 0;
+    }
+    cos = distance(tf_idf_text, tf_idf_notice);
+
+    vector_destroy(tf_idf_text, free);
+    vector_destroy(tf_idf_notice, free);
+    return cos;
+}
+
 void classifier(Index inverted, Index forward, int k) {
     if (k > index_size(forward)) {
         printf("warn: k is greater than number of docs.\n");
@@ -194,12 +252,41 @@ void classifier(Index inverted, Index forward, int k) {
     }
 
     Vector words_input = get_words_input("type the text: ");
+
+    // gerar um indice de palavras ?
+    Index_Item ii;
+    Index_Map words_index = map_new();
     Vector docs_index = vector_new();
+    char *word_input;
+    void *_, *__;
+    
+    // set frequancy
+    vector_for(word_input, words_input) {
+        // vai setando a frequencia
+        index_map_add(words_index, word_input, 1);
+    }
+    
+    // set tf-idf
+
+    // teste exibicao, retirar depois
+    map_for(word_input, ii, words_index) {
+        printf("key: %s \t", word_input);
+        index_item_show(ii);
+        printf("\n");
+    }
+
+    // calculate distance
+    index_for(_,__, forward){
+        double cos = calculate_distance_text_to_notice(inverted, words_index, __i);
+        printf("index: %d, cos %lf\n", __i, cos);
+    
+    }
 
     vector_push(docs_index, new_int(0));
     printf("\nK-Nearest Neighbors - KNN\n\n");
     classifier_show(docs_index, forward);
 
+    map_destroy(words_index, free, free);
     vector_destroy(docs_index, free);
     vector_destroy(words_input, free);
 }
