@@ -4,6 +4,7 @@
 #include <map.h>
 #include <pair.h>
 #include <stdio.h>
+#include <vector.h>
 
 #define index_for(key, index_map, index)              \
     key = pair_first(index_at(index, 0));             \
@@ -14,11 +15,12 @@
 
 typedef struct _index_item *Index_Item;
 typedef Map Index_Map;
+typedef Vector Index_Vector;
 typedef struct _index *Index;
 
 // index_item
 
-Index_Item index_item_new(int freq, double tf_idf); // Private
+Index_Item index_item_new(int freq, double tf_idf);  // Private
 void index_item_set(Index_Item ii, int freq, double tf_idf);
 void index_set_freq(Index_Item ii, int freq);
 void index_set_tfidf(Index_Item ii, double tf_idf);
@@ -64,4 +66,10 @@ int decrescent_int_sort(const void *d1, const void *d2);
 int crescent_int_sort(const void *d1, const void *d2);
 int decrescent_item_freq_sort(const void *d1, const void *d2);
 int alphabetic_sort(const void *d1, const void *d2);
+
+// mathematic
+
+double distance(Index_Vector v1, Index_Vector v2);
+// double escalar(Index_Vector v1, Index_Vector v2);
+// double magnetude(Index_Vector v);
 #endif  // INDEX_H

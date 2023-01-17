@@ -23,7 +23,8 @@ void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
 void search_engine(Index inverted, Index forward);
 
 // classifier
-
+double classifier_distance(Index inverted, Index_Map words_index,
+                           char *index_doc);
 void classifier_show(Vector docs_index, Index forward);
 void classifier(Index inverted, Index forward, int k);
 
@@ -108,7 +109,7 @@ void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
             break;
         }
 
-        double *sum = vector_at(tfidf, __i);
+        double *sum = vector_at(tfidf, __i); 
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
@@ -129,15 +130,17 @@ void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
     index_for(_, im, forward) {
         double sum = 0;
         sprintf(doc_index, "%d", __i);
+
         vector_for(word_input, words_input) {
             Index_Item ii = index_get_get(inverted, word_input, doc_index);
-            if (ii) {
-                sum += index_item_tfidf(ii);
+            if (ii) { // for all words from words_input found inside a document __i
+                sum += index_item_tfidf(ii); // sum it's tf-idfs
             }
         }
-        if (sum > 0) {
-            Pair p = pair_new(new_int(__i), new_double(sum));
-            vector_push(values, p);
+
+        if (sum > 0) { // sum = 0 is invalid
+            Pair p = pair_new(new_int(__i), new_double(sum)); // index and tf-idf's sum
+            vector_push(values, p); 
         }
     }
 }
@@ -151,17 +154,19 @@ void search_engine(Index inverted, Index forward) {
     Vector values = vector_new();
 
     search_sum_tfidf(inverted, forward, words_input, values);
-    vector_sort(values, decrescent_double_sort);
+    vector_sort(values, decrescent_double_sort); // decrescent order of sum of values from tf-idf's
 
     Pair p;
     vector_for(p, values) {
         if (__i > 9) {
             break;
         }
+        // splits the data into two vectors
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
         vector_push(tfidf, new_double(*(double *)pair_second(p)));
     }
 
+    // show
     search_show_docs(docs_index, tfidf, forward);
 
     vector_destroy(words_input, free);
@@ -180,36 +185,16 @@ void classifier_show(Vector docs_index, Index forward) {
         return;
     }
     vector_for(doc_index, docs_index) {
-        Pair p = index_at(forward, *doc_index);
+        // the document of that position in the index of documents
+        Pair p = index_at(forward, *doc_index); 
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
         printf("path: %s \t class: %s\n", path, classname_map_get(class));
     }
 }
 
-double magnetude(Vector v) {
-    double sum = 0, *a;
-    vector_for(a, v) {
-        sum += pow(*a, 2);
-    }
-    return sqrt(sum);
-}
-
-double escalar(Vector v1, Vector v2) {
-    double *a, *b, sum = 0;
-    vector_for(a, v1) {
-        b = vector_at(v2, __i);
-        sum += (*a) * (*b);
-    }
-    return sum;
-}
-
-double distance(Vector v1, Vector v2) {
-    return escalar(v1, v2) / (magnetude(v1) * magnetude(v2));
-}
-
-double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
-                                         char *index_doc) {
+double classifier_distance(Index inverted, Index_Map words_index,
+                           char *index_doc) {
     Vector tf_idf_text = vector_new();
     Vector tf_idf_notice = vector_new();
     Index_Item di_inverted;
@@ -219,8 +204,10 @@ double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
     double cos = 0;
 
     map_for(word, di_words_index, words_index) {
+        // get a word item from the word index of a specific document
         di_inverted = index_get_get(inverted, word, index_doc);
         if (di_inverted) {
+            // if word exists in document
             tf_idf = index_item_tfidf(di_inverted);
             vector_push(tf_idf_notice, new_double(tf_idf));
             tf_idf = index_item_tfidf(di_words_index);
@@ -228,11 +215,14 @@ double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
         }
     }
 
+    // there are no equal words
     if (vector_size(tf_idf_notice) < 1) {
         vector_destroy(tf_idf_text, free);
         vector_destroy(tf_idf_notice, free);
         return 0;
     }
+
+    // calculates the distance between the two vectors
     cos = distance(tf_idf_text, tf_idf_notice);
 
     vector_destroy(tf_idf_text, free);
@@ -261,7 +251,7 @@ void classifier(Index inverted, Index forward, int k) {
     int total_docs = index_size(forward);
     void *_, *__;
 
-    // set frequancy
+    // set frequency
     vector_for(word_input, words_input) {
         index_map_add(words_index, word_input, 1);
     }
@@ -278,17 +268,19 @@ void classifier(Index inverted, Index forward, int k) {
             index_calculate_tfidf(index_item_freq(ii), len_docs, total_docs);
         index_set_tfidf(ii, tf_idf);
     }
+
     // calculate distance
     index_for(_, __, forward) {
         sprintf(index_doc, "%d", __i);
-        double cos =
-            calculate_distance_text_to_notice(inverted, words_index, index_doc);
+        double cos = classifier_distance(inverted, words_index, index_doc);
         p = pair_new(new_int(__i), new_double(cos));
         vector_push(values, p);
     }
 
+    // sort
     vector_sort(values, decrescent_double_sort);
 
+    // navigates through the first k positions of 'values'
     vector_for(p, values) {
         if (__i > k) {
             break;
@@ -297,8 +289,11 @@ void classifier(Index inverted, Index forward, int k) {
         vector_push(docs_index, new_int(idx));
     }
 
+    // show
     printf("\nK-Nearest Neighbors - KNN\n\n");
     classifier_show(docs_index, forward);
+
+    // destroy
     vector_destroy(values, destroy_pair_inside_vector);
     map_destroy(words_index, free, free);
     vector_destroy(docs_index, free);
