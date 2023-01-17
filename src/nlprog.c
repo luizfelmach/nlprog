@@ -284,10 +284,10 @@ void classifier(Index inverted, Index forward, int k) {
     index_for(_, im, forward) {
         sprintf(index_doc, "%d", __i);
         double cos = classifier_distance(inverted, words_index, index_doc, im);
-        if (cos) {
-            p = pair_new(new_int(__i), new_double(cos));
-            vector_push(values, p);
-        }
+        // if (cos) {
+        p = pair_new(new_int(__i), new_double(cos));
+        vector_push(values, p);
+        //}
         // printf("%s %lf\n", (char *)pair_first(index_at(forward, __i)), cos);
     }
 
