@@ -37,7 +37,7 @@ $(LIBRARIES_BUILD)%.o: $(LIBRARIES_DIR)*/%.c $(LIBRARIES_DIR)*/%.h
 	$(eval OUT = $(addsuffix .o, $(addprefix $(LIBRARIES_BUILD), $(BASENAME))))
 	@echo -e "building \033[1;32m$(BASENAME)\033[0m"
 	@mkdir -p $(LIBRARIES_BUILD)
-	@$(CC) $(CC_FLAGS) -c -o $(OUT) $(ALL_INCLUDES) $<
+	@$(CC) -c -o $(OUT) $(ALL_INCLUDES) $< $(CC_FLAGS) 
 
 # ----------- Generate indexer -----------
 $(INDEXER): $(BINARIES_DIR)indexer.c $(ALL_OBJECTS)
@@ -52,7 +52,7 @@ $(NLPROG): $(BINARIES_DIR)nlprog.c $(ALL_OBJECTS)
 # ----------- Generate experimental -----------
 $(EXPERIMENTAL): $(BINARIES_DIR)experimental.c $(ALL_OBJECTS)
 	@echo -e "linking with \033[1;35mexperimental\033[0m"
-	@$(CC) $(CC_FLAGS) -o $(EXPERIMENTAL) $(ALL_INCLUDES) $(BINARIES_DIR)experimental.c $(ALL_OBJECTS)
+	@$(CC) -o $(EXPERIMENTAL) $(ALL_INCLUDES) $(BINARIES_DIR)experimental.c $(ALL_OBJECTS) $(CC_FLAGS) 
 
 # ----------- Generate tests -----------
 $(TESTS_BUILD)%: $(TESTS_DIR)%.c $(ALL_OBJECTS)

@@ -183,7 +183,7 @@ void classifier_show(Vector docs_index, Index forward) {
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
-        printf("path: %s \t class: %s\n", path, class);
+        printf("path: %s \t class: %s\n", path, classname_map_get(class));
     }
 }
 
@@ -229,6 +229,8 @@ double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
     }
 
     if (vector_size(tf_idf_notice) < 1) {
+        vector_destroy(tf_idf_text, free);
+        vector_destroy(tf_idf_notice, free);
         return 0;
     }
     cos = distance(tf_idf_text, tf_idf_notice);
@@ -288,7 +290,7 @@ void classifier(Index inverted, Index forward, int k) {
     vector_sort(values, decrescent_double_sort);
 
     vector_for(p, values) {
-        if (__i > 9) {
+        if (__i > k) {
             break;
         }
         int idx = *(int *)pair_first(p);
