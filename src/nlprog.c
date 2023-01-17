@@ -236,7 +236,7 @@ double calculate_distance_text_to_notice(Index inverted, Index_Map words_index,
     }
 
     if(vector_size(tf_idf_notice) < 1){
-        return -2;
+        return 0;
     }
     cos = distance(tf_idf_text, tf_idf_notice);
 
@@ -260,11 +260,13 @@ void classifier(Index inverted, Index forward, int k) {
     char *word_input;
     void *_, *__;
     
-
+    // set frequancy
     vector_for(word_input, words_input) {
         // vai setando a frequencia
         index_map_add(words_index, word_input, 1);
     }
+    
+    // set tf-idf
 
     // teste exibicao, retirar depois
     map_for(word_input, ii, words_index) {
@@ -273,12 +275,11 @@ void classifier(Index inverted, Index forward, int k) {
         printf("\n");
     }
 
-    // calcular a distancia
+    // calculate distance
     index_for(_,__, forward){
         double cos = calculate_distance_text_to_notice(inverted, words_index, __i);
-        if(cos != -2){
-           printf("index: %d, cos %lf\n", __i, cos);
-        }
+        printf("index: %d, cos %lf\n", __i, cos);
+    
     }
 
     vector_push(docs_index, new_int(0));
