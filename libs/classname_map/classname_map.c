@@ -1,11 +1,8 @@
 #include <classname_map.h>
-#include <map.h>
-#include <pair.h>
-#include <string.h>
 #include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 
 const char *classname_map[22][2] = {
     {"at2", "at2"},         {"bro", "Qual a Bronca"},
@@ -30,3 +27,53 @@ const char *classname_map_get(char *key) {
     return classname_map[i][1];
 }
 
+int decrescent_frequency_sort(const void *d1, const void *d2) {
+    int *f1 = pair_second(*(const Pair *)d1);
+    int *f2 = pair_second(*(const Pair *)d2);
+    if (*f1 - *f2 < 0) {
+        return 1;
+    } else if (*f1 - *f2 > 0) {
+        return -1;
+    }
+    return 0;
+}
+
+Map classname_map_frequency(Vector vector_classes) {
+    if (vector_size(vector_classes) < 1) {
+        return NULL;
+    }
+
+    Map classes_map = map_new();
+    Pair p;
+    char key[2048];
+    char *class;
+
+    vector_for(class, vector_classes) {
+        // insert class
+        int *freq = map_get(classes_map, class);
+        if (!freq) {
+            map_insert(classes_map, new_string(class), new_int(0));
+            freq = map_get(classes_map, class);
+        }
+        *freq += 1;
+    }
+
+    map_sort(classes_map, decrescent_frequency_sort);
+    return classes_map;
+}
+
+const char *classname_map_first(Vector vector_classes, int* freq) {
+    // get the first element from
+    Map classes_map = classname_map_frequency(vector_classes);
+    if (!classes_map) {
+        return NULL;
+    }
+
+    char class[2048];
+    Pair p = map_at(classes_map, 0);
+    sscanf((char *)pair_first(p), "%s", class);
+    *freq = *(int*)pair_second(p);
+
+    map_destroy(classes_map, free, free);
+    return classname_map_get(class);
+}
