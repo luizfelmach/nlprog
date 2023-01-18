@@ -25,7 +25,7 @@ void search_engine(Index inverted, Index forward);
 // classifier
 double classifier_distance(Index inverted, Index_Map words_index,
                            char *index_doc, Index_Map document);
-void classifier_show(Vector docs_index, Index forward);
+void classifier_show(Vector docs_index, Vector similarity, Index forward, const char *classname);
 void classifier(Index inverted, Index forward, int k);
 
 // doc report
@@ -180,19 +180,24 @@ void search_engine(Index inverted, Index forward) {
 
 // classifier
 
-void classifier_show(Vector docs_index, Index forward) {
+void classifier_show(Vector docs_index, Vector similarity, Index forward, const char *classname) {
     char path[2048], class[2048];
     int *doc_index;
+
+    printf("\nK-Nearest Neighbors - KNN\n\n");
     if (!vector_size(docs_index)) {
         printf("info: no results.\n");
         return;
+    } else {
+        printf("The class is: %s\n\n", classname);
     }
     vector_for(doc_index, docs_index) {
+        double *cos = vector_at(similarity, __i);
         // the document of that position in the index of documents
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
-        printf("path: %s \t class: %s\n", path, classname_map_get(class));
+        printf("path: %s \t class: %s \t similarity: %.2lf%%\n", path, classname_map_get(class), (*cos) * 100);
     }
 }
 
@@ -200,12 +205,11 @@ double classifier_distance(Index inverted, Index_Map words_index,
                            char *index_doc, Index_Map document) {
     Vector tf_idf_text = vector_new();
     Vector tf_idf_notice = vector_new();
-    Index_Item di_inverted;
     Index_Item di_words_index;
+    Index_Item di_document;
     char *word;
     double tf_idf;
     double cos = 0;
-    Index_Item di_document;
 
     map_for(word, di_document, document) {
         Pair p = index_at(inverted, atoi(word));
@@ -230,6 +234,8 @@ double classifier_distance(Index inverted, Index_Map words_index,
         }
     }
     if (!count) {
+        vector_destroy(tf_idf_text, free);
+        vector_destroy(tf_idf_notice, free);
         return 0;
     }
 
@@ -241,26 +247,13 @@ double classifier_distance(Index inverted, Index_Map words_index,
     return cos;
 }
 
-void classifier(Index inverted, Index forward, int k) {
-    if (k > index_size(forward)) {
-        printf("warn: k is greater than number of docs.\n");
-        return;
-    }
-
-    Vector words_input = get_words_input("type the text: ");
-
-    Vector docs_index = vector_new();
-    Vector values = vector_new();
-    Index_Map words_index = map_new();
+void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
+                     int total_docs) {
     Index_Map im;
-    Pair p;
     Index_Item ii;
-    char *word_input;
-    char index_doc[2048];
-    double tf_idf;
     int len_docs;
-    int total_docs = index_size(forward);
-    void *_, *__;
+    double tf_idf;
+    char *word_input;
 
     // set frequency
     vector_for(word_input, words_input) {
@@ -279,6 +272,60 @@ void classifier(Index inverted, Index forward, int k) {
             index_calculate_tfidf(index_item_freq(ii), len_docs, total_docs);
         index_set_tfidf(ii, tf_idf);
     }
+}
+
+const char *calculate_the_class_most_frequently(Index forward,
+                                                Vector docs_index) {
+    Index_Map classes_map = map_new();
+    Pair p;
+    char key[2048];
+    int *idx;
+
+    vector_for(idx, docs_index) {
+        
+        // get class
+        p = index_at(forward, *idx);
+        char *path_class = pair_first(p);
+        char class[2048];
+        sscanf(path_class, "%*[^,],%s", class);
+
+        // insert class
+        int *freq = map_get(classes_map, class);
+        if (!freq) {
+            map_insert(classes_map, new_string(class), new_int(0));
+            freq = map_get(classes_map, class);
+        }
+        *freq += 1;
+    }
+
+    map_sort(classes_map, decrescent_int_sort);
+
+    // get the first element from 
+    p = map_at(classes_map, 0);
+    sscanf((char *)pair_first(p), "%s", key);
+    map_destroy(classes_map, free, free);
+
+    return classname_map_get(key);
+}
+
+void classifier(Index inverted, Index forward, int k) {
+    if (k > index_size(forward)) {
+        printf("warn: k is greater than number of docs.\n");
+        return;
+    }
+
+    Vector words_input = get_words_input("type the text: ");
+    Vector docs_index = vector_new();
+    Vector cosseno = vector_new();
+    Vector values = vector_new();
+    Index_Map words_index = map_new();
+    Index_Map im;
+    Pair p;
+    char index_doc[2048];
+    void *_;
+
+    // create 'words_index' and set its frequency and its tf-idf
+    get_words_index(inverted, words_index, words_input, index_size(forward));
 
     // calculate distance
     index_for(_, im, forward) {
@@ -288,9 +335,7 @@ void classifier(Index inverted, Index forward, int k) {
         p = pair_new(new_int(__i), new_double(cos));
         vector_push(values, p);
         //}
-        // printf("%s %lf\n", (char *)pair_first(index_at(forward, __i)), cos);
     }
-
     // sort
     vector_sort(values, decrescent_double_sort);
 
@@ -299,18 +344,23 @@ void classifier(Index inverted, Index forward, int k) {
         if (__i > k) {
             break;
         }
+        // get index
         int idx = *(int *)pair_first(p);
         vector_push(docs_index, new_int(idx));
+        double cos = *(double*)pair_second(p);
+        vector_push(cosseno, new_double(cos));
     }
 
+    const char *key = calculate_the_class_most_frequently(forward, docs_index);
+
     // show
-    printf("\nK-Nearest Neighbors - KNN\n\n");
-    classifier_show(docs_index, forward);
+    classifier_show(docs_index, cosseno , forward, key);
 
     // destroy
     vector_destroy(values, destroy_pair_inside_vector);
     map_destroy(words_index, free, free);
     vector_destroy(docs_index, free);
+    vector_destroy(cosseno, free);
     vector_destroy(words_input, free);
 }
 

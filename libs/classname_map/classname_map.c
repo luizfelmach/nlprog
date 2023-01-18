@@ -1,5 +1,11 @@
 #include <classname_map.h>
+#include <map.h>
+#include <pair.h>
 #include <string.h>
+#include <primitive.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 
 const char *classname_map[22][2] = {
     {"at2", "at2"},         {"bro", "Qual a Bronca"},
@@ -23,3 +29,4 @@ const char *classname_map_get(char *key) {
     }
     return classname_map[i][1];
 }
+
