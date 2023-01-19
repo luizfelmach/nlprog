@@ -6,6 +6,6 @@
 #include <vector.h>
 
 const char *classname_map_get(char *key);
-Map classname_map_frequency(Vector vector_classes);
+Map classname_map_frequency(Vector vector_classes, Vector vector_freq);
 const char *classname_map_first(Vector vector_classes, int *freq);
 #endif  // CLASSNAME_MAP_H

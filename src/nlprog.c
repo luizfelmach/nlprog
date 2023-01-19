@@ -8,12 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector.h>
+#include <maths.h>
 
 // nlprog
 
 void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k);
 void destroy_pair_inside_vector(void *data);
 Vector get_words_input(char *label);
+void get_class(Index forward, Vector docs_index, Vector vector_classes);
 
 // search engine
 
@@ -23,7 +25,6 @@ void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
 void search_engine(Index inverted, Index forward);
 
 // classifier
-void get_class(Index forward, Vector docs_index, Vector vector_classes);
 void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
                      int total_docs);
 double classifier_distance(Index inverted, Index_Map words_index,
@@ -39,7 +40,7 @@ void doc_report(Index forward);
 void show_document(Vector v);
 
 // word report
-
+void word_report_class_show(Index_Map map_classes);
 void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
                       Index forward, char *word);
 void word_report(Index inverted, Index forward);
@@ -49,10 +50,10 @@ int main(int argc, char *argv[]) {
     Index inverted, forward;
     setup(argc, argv, &inverted, &forward, &k);
 
-    // search_engine(inverted, forward);
+    search_engine(inverted, forward);
     classifier(inverted, forward, k);
-    // doc_report(forward);
-    // word_report(inverted, forward);
+    doc_report(forward);
+    word_report(inverted, forward);
 
     index_destroy(inverted);
     index_destroy(forward);
@@ -97,6 +98,17 @@ Vector get_words_input(char *label) {
     return words_input;
 }
 
+void get_class(Index forward, Vector docs_index, Vector vector_classes) {
+    int *idx;
+    vector_for(idx, docs_index) {
+        Pair p = index_at(forward, *idx);
+        char *path_class = pair_first(p);
+        char class[2048];
+        sscanf(path_class, "%*[^,],%s", class);
+        vector_push(vector_classes, new_string(class));
+    }
+}
+
 // search engine
 
 void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
@@ -108,6 +120,7 @@ void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
         printf("info: the search returned no results.\n");
         return;
     }
+    printf("<index> \t <classname> \t <sum of tf-idf> \t <path>\n");
     vector_for(doc_index, docs_index) {
         if (__i > 9) {
             break;
@@ -121,7 +134,7 @@ void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
 
         printf("# %5d \t", *doc_index);
         printf("%12s \t", classname);
-        printf("%.2lf \t", *sum);
+        printf("%16.2lf \t ", *sum);
         printf("%s\n", path);
     }
 }
@@ -152,7 +165,7 @@ void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
 }
 
 void search_engine(Index inverted, Index forward) {
-    printf("\n............ search engine ............\n\n");
+    printf("\n............ SEARCH ENGINE ............\n\n");
 
     Vector words_input = get_words_input("search: ");
     Vector docs_index = vector_new();
@@ -194,18 +207,20 @@ void classifier_show(Vector docs_index, Vector similarity, Index forward,
         printf("info: no results.\n");
         return;
     } else {
-        printf("The class is: %s \t ", classname);
+        printf("the class is: %s \t ", classname);
         printf("probability: %.2lf%%\n\n", probability);
     }
+    printf("<index> \t <classname> \t <similarity> \t <path>\n");
     vector_for(doc_index, docs_index) {
         double *cos = vector_at(similarity, __i);
         // the document of that position in the index of documents
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
-        printf("path: %s \t ",path);
-        printf("class: %s \t", classname_map_get(class));
-        printf("similarity: %.2lf%%\n",(*cos) * 100);
+        printf("# %5d \t ", *doc_index);
+        printf("%10s \t ", classname_map_get(class));
+        printf("%5.2lf%% \t ", (*cos) * 100);
+        printf("%s \n", path);
     }
 }
 
@@ -248,7 +263,7 @@ double classifier_distance(Index inverted, Index_Map words_index,
     }
 
     // calculates the distance between the two vectors
-    cos = distance(tf_idf_text, tf_idf_notice);
+    cos = maths_cosv1v2(tf_idf_text, tf_idf_notice);
 
     vector_destroy(tf_idf_text, free);
     vector_destroy(tf_idf_notice, free);
@@ -282,22 +297,8 @@ void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
     }
 }
 
-void get_class(Index forward, Vector docs_index, Vector vector_classes) {
-    Pair p;
-    char key[2048];
-    int *idx;
-
-    vector_for(idx, docs_index) {
-        // get class
-        p = index_at(forward, *idx);
-        char *path_class = pair_first(p);
-        char class[2048];
-        sscanf(path_class, "%*[^,],%s", class);
-        vector_push(vector_classes, new_string(class));
-    }
-}
-
 void classifier(Index inverted, Index forward, int k) {
+    printf("\n.............. CLASSIFIER ..............\n\n");
     if (k > index_size(forward)) {
         printf("warn: k is greater than number of docs.\n");
         return;
@@ -326,21 +327,21 @@ void classifier(Index inverted, Index forward, int k) {
         vector_push(values, p);
     }
 
-    vector_sort(values, decrescent_double_sort); // sort
+    vector_sort(values, decrescent_double_sort);  // sort
     // navigates through the first k positions of 'values'
     vector_for(p, values) {
         if (__i >= k) {
             break;
         }
-        vector_push(docs_index, pair_first(p)); // index
-        vector_push(docs_cosine, pair_second(p)); // coss
+        vector_push(docs_index, pair_first(p));    // index
+        vector_push(docs_cosine, pair_second(p));  // coss
     }
 
     get_class(forward, docs_index, vector_classes);
     const char *class = classname_map_first(vector_classes, &freq);
 
-    double probability = (100.0 * freq )/ vector_size(docs_index);
-    
+    double probability = (100.0 * freq) / vector_size(docs_index);
+
     // show
     classifier_show(docs_index, docs_cosine, forward, class, probability);
 
@@ -362,6 +363,7 @@ void doc_report_show(Vector docs_index, Vector docs_freq, Index forward) {
         printf("info: nothing to show.\n");
         return;
     }
+    printf("<index> \t <classname> \t <frequency> \t <path>\n");
     vector_for(doc_index, docs_index) {
         if (__i > 9) {
             break;
@@ -374,13 +376,13 @@ void doc_report_show(Vector docs_index, Vector docs_freq, Index forward) {
 
         printf("# %5d \t", *doc_index);
         printf("%12s \t", classname);
-        printf("%d \t", *freq);
+        printf("%12d \t ", *freq);
         printf("%s\n", path);
     }
 }
 
 void doc_report(Index forward) {
-    printf("\n............ doc report ............\n\n");
+    printf("\n............ DOC REPORT ............\n\n");
 
     Vector values = vector_new();
     Vector docs_index_asc = vector_new();
@@ -419,9 +421,9 @@ void doc_report(Index forward) {
         vector_push(docs_freq_desc, new_int(*(int *)pair_second(p)));
     }
 
-    printf("--> asc order\n");
+    printf("-> asc order\n");
     doc_report_show(docs_index_asc, docs_freq_asc, forward);
-    printf("\n--> desc order\n");
+    printf("\n-> desc order\n");
     doc_report_show(docs_index_desc, docs_freq_desc, forward);
 
     vector_destroy(docs_index_asc, free);
@@ -432,6 +434,19 @@ void doc_report(Index forward) {
 }
 
 // word report
+void word_report_class_show(Index_Map map_classes) {
+    char *class;
+    int *freq;
+    printf("<rating> \t <classname> \t <word frequency> \n");
+    map_for(class, freq, map_classes) {
+        if (__i > 9) {
+            break;
+        }
+        printf("# %5d \t", __i + 1);
+        printf("%12s \t", classname_map_get(class));
+        printf("%17d\n", *freq);
+    }
+}
 
 void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
                       Index forward, char *word) {
@@ -441,6 +456,7 @@ void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
         printf("info: nothing to show.\n");
         return;
     }
+    printf("<index> \t <classname> \t <frequency> \t <path>\n");
     vector_for(doc_index, docs_index) {
         if (__i > 9) {
             break;
@@ -453,13 +469,13 @@ void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
 
         printf("# %5d \t", *doc_index);
         printf("%12s \t", classname);
-        printf("%d \t", *freq);
+        printf("%12d \t ", *freq);
         printf("%s\n", path);
     }
 }
 
 void word_report(Index inverted, Index forward) {
-    printf("\n............ word report ............\n\n");
+    printf("\n............ WORD REPORT ............\n\n");
 
     char word[2048];
     printf("query: ");
@@ -472,13 +488,14 @@ void word_report(Index inverted, Index forward) {
         return;
     }
 
+    Vector vector_classes = vector_new();
     Vector docs_index = vector_new();
     Vector word_freq = vector_new();
     Vector values = vector_new();
+    Index_Map map_classes;
 
-    printf("info: '%s' appeared in %d/%d docs.\n", word, map_size(im),
+    printf("info: '%s' appeared in %d/%d docs.\n\n", word, map_size(im),
            index_size(forward));
-    printf("\n");
 
     Index_Item ii;
     char *doc_index;
@@ -492,18 +509,20 @@ void word_report(Index inverted, Index forward) {
 
     Pair p;
     vector_for(p, values) {
-        if (__i > 9) {
-            break;
-        }
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
         vector_push(word_freq, new_int(*(int *)pair_second(p)));
     }
 
-    printf("--> most frequently\n");
-    word_report_show(docs_index, word_freq, inverted, forward, word);
-    printf("\n--> most frequently (class)\n");
-    word_report_show(docs_index, word_freq, inverted, forward, word);
+    get_class(forward, docs_index, vector_classes);
+    map_classes = classname_map_frequency(vector_classes, word_freq);
 
+    printf("-> most frequently\n");
+    word_report_show(docs_index, word_freq, inverted, forward, word);
+    printf("\n-> most frequently (class)\n");
+    word_report_class_show(map_classes);
+
+    map_destroy(map_classes, free, free);
+    vector_destroy(vector_classes, free);
     vector_destroy(docs_index, free);
     vector_destroy(word_freq, free);
     vector_destroy(values, destroy_pair_inside_vector);

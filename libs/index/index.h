@@ -67,9 +67,4 @@ int crescent_int_sort(const void *d1, const void *d2);
 int decrescent_item_freq_sort(const void *d1, const void *d2);
 int alphabetic_sort(const void *d1, const void *d2);
 
-// mathematic
-
-double distance(Index_Vector v1, Index_Vector v2);
-// double escalar(Index_Vector v1, Index_Vector v2);
-// double magnetude(Index_Vector v);
 #endif  // INDEX_H
