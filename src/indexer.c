@@ -147,7 +147,6 @@ void insert_keys_into_forward(Index forward, Vector path_docs,
     char key[2048];
     int i;
     for (i = 0; i < vector_size(path_docs); i++) {
-        // path_doc,class_doc
         sprintf(key, "%s,%s", (char *)vector_at(path_docs, i),
                 (char *)vector_at(class_docs, i));
         index_insert(forward, key);
