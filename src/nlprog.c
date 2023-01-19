@@ -3,18 +3,19 @@
 #include <index.h>
 #include <map.h>
 #include <math.h>
+#include <maths.h>
 #include <primitive.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector.h>
-#include <maths.h>
 
 // nlprog
 
 void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k);
 void destroy_pair_inside_vector(void *data);
 Vector get_words_input(char *label);
+// cria um vetor de classes a partir do indice de documentos dado
 void get_class(Index forward, Vector docs_index, Vector vector_classes);
 
 // search engine
@@ -27,8 +28,8 @@ void search_engine(Index inverted, Index forward);
 // classifier
 void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
                      int total_docs);
-double classifier_distance(Index inverted, Index_Map words_index,
-                           char *index_doc, Index_Map document);
+double classifier_cosine(Index inverted, Index_Map words_index, char *index_doc,
+                         Index_Map document);
 void classifier_show(Vector docs_index, Vector similarity, Index forward,
                      const char *classname, double probability);
 void classifier(Index inverted, Index forward, int k);
@@ -122,7 +123,7 @@ void search_show_docs(Vector docs_index, Vector tfidf, Index forward) {
     }
     printf("<index> \t <classname> \t <sum of tf-idf> \t <path>\n");
     vector_for(doc_index, docs_index) {
-        if (__i > 9) {
+        if (__i > 9) {  // exibe apenas até os 10 primeiros
             break;
         }
 
@@ -144,21 +145,22 @@ void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
     char *word_input, doc_index[2048];
     Index_Map im;
     void *_;
-    index_for(_, im, forward) {
+    index_for(_, im, forward) {  // varre o indice de documentos
         double sum = 0;
         sprintf(doc_index, "%d", __i);
 
         vector_for(word_input, words_input) {
             Index_Item ii = index_get_get(inverted, word_input, doc_index);
-            if (ii) {  // for all words from words_input found inside a document
-                       // __i
-                sum += index_item_tfidf(ii);  // sum it's tf-idfs
+            if (ii) {
+                // se a palavra 'word_input' existe nesse documento
+                // adiciono à soma o tf-idf dessa palavra contida no documento
+                sum += index_item_tfidf(ii);
             }
         }
 
-        if (sum > 0) {  // sum = 0 is invalid
-            Pair p = pair_new(new_int(__i),
-                              new_double(sum));  // index and tf-idf's sum
+        // add somente as somas > 0 e seus respectivos indices de doc à 'values'
+        if (sum > 0) {
+            Pair p = pair_new(new_int(__i), new_double(sum));
             vector_push(values, p);
         }
     }
@@ -172,21 +174,22 @@ void search_engine(Index inverted, Index forward) {
     Vector tfidf = vector_new();
     Vector values = vector_new();
 
+    // para cada documento soma os tf-idf's do documento ∩ 'words_input'
+    // o indice e a soma dos tf-idf's sao armazenados em 'values'
     search_sum_tfidf(inverted, forward, words_input, values);
-    vector_sort(values, decrescent_double_sort);  // decrescent order of sum of
-                                                  // values from tf-idf's
+    // ordem decrescente da soma de tf-idf's
+    vector_sort(values, decrescent_double_sort);
 
+    // separa os dados do vetor 'values' em 2
     Pair p;
     vector_for(p, values) {
         if (__i > 9) {
             break;
         }
-        // splits the data into two vectors
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
         vector_push(tfidf, new_double(*(double *)pair_second(p)));
     }
 
-    // show
     search_show_docs(docs_index, tfidf, forward);
 
     vector_destroy(words_input, free);
@@ -213,7 +216,6 @@ void classifier_show(Vector docs_index, Vector similarity, Index forward,
     printf("<index> \t <classname> \t <similarity> \t <path>\n");
     vector_for(doc_index, docs_index) {
         double *cos = vector_at(similarity, __i);
-        // the document of that position in the index of documents
         Pair p = index_at(forward, *doc_index);
         char *path_class = pair_first(p);
         sscanf(path_class, "%[^,],%s", path, class);
@@ -224,24 +226,27 @@ void classifier_show(Vector docs_index, Vector similarity, Index forward,
     }
 }
 
-double classifier_distance(Index inverted, Index_Map words_index,
-                           char *index_doc, Index_Map document) {
+double classifier_cosine(Index inverted, Index_Map words_index, char *index_doc,
+                         Index_Map document) {
     Vector tf_idf_text = vector_new();
     Vector tf_idf_notice = vector_new();
     Index_Item di_words_index;
     Index_Item di_document;
-    char *word;
+    char *index;
     double tf_idf;
     double cos = 0;
+    // para todas as palavras desse documento
+    map_for(index, di_document, document) {
+        // no indice de palaras, recupera 'word' da posicao 'index'
+        Pair p = index_at(inverted, atoi(index));
+        char *word = pair_first(p);
 
-    map_for(word, di_document, document) {
-        Pair p = index_at(inverted, atoi(word));
-        char *key = pair_first(p);
-
-        di_words_index = map_get(words_index, key);
+        // procura 'word' em 'words_index'
+        di_words_index = map_get(words_index, word);
         if (di_words_index) {
             tf_idf = index_item_tfidf(di_words_index);
         } else {
+            // se essa palavra nao existe em 'word_index', seu tf-idf = 0
             tf_idf = 0;
         }
         vector_push(tf_idf_text, new_double(tf_idf));
@@ -256,13 +261,14 @@ double classifier_distance(Index inverted, Index_Map words_index,
             count++;
         }
     }
+
     if (!count) {
         vector_destroy(tf_idf_text, free);
         vector_destroy(tf_idf_notice, free);
         return 0;
     }
 
-    // calculates the distance between the two vectors
+    // calcula o cosseno entre os dois vetores
     cos = maths_cosv1v2(tf_idf_text, tf_idf_notice);
 
     vector_destroy(tf_idf_text, free);
@@ -278,12 +284,12 @@ void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
     double tf_idf;
     char *word_input;
 
-    // set frequency
+    // seta o frequencia
     vector_for(word_input, words_input) {
         index_map_add(words_index, word_input, 1);
     }
 
-    // set tf-idf
+    // seta  o tf-idf
     map_for(word_input, ii, words_index) {
         im = index_get(inverted, word_input);
         if (im) {
@@ -310,25 +316,25 @@ void classifier(Index inverted, Index forward, int k) {
     Vector docs_cosine = vector_new();
     Vector values = vector_new();
     Index_Map words_index = map_new();
-    Index_Map im;
-    Pair p;
     char index_doc[2048];
     void *_;
-    int freq;
 
-    // create 'words_index' and set its frequency and its tf-idf
+    // 'word_index' é o indice de palavras produzido a partir do input do
+    // usuario cria 'word_index' e seta sua frequcia e tf_idf
     get_words_index(inverted, words_index, words_input, index_size(forward));
 
-    // calculate distance
+    // calcula o cosseno
+    Pair p;
+    Index_Map im;
     index_for(_, im, forward) {
         sprintf(index_doc, "%d", __i);
-        double cos = classifier_distance(inverted, words_index, index_doc, im);
-        p = pair_new(new_int(__i), new_double(cos));
+        double cos = classifier_cosine(inverted, words_index, index_doc, im);
+        p = pair_new(new_int(__i), new_double(cos));  // indice e cosseno
         vector_push(values, p);
     }
 
-    vector_sort(values, decrescent_double_sort);  // sort
-    // navigates through the first k positions of 'values'
+    // navega entre as k primeiras posicoes de 'values' e o separa em 2
+    vector_sort(values, decrescent_double_sort);
     vector_for(p, values) {
         if (__i >= k) {
             break;
@@ -337,15 +343,15 @@ void classifier(Index inverted, Index forward, int k) {
         vector_push(docs_cosine, pair_second(p));  // coss
     }
 
+    int freq;
     get_class(forward, docs_index, vector_classes);
-    const char *class = classname_map_first(vector_classes, &freq);
+    const char *class = classname_map_first(vector_classes, &freq);  // +freq
 
+    // probabilidade de acerto
     double probability = (100.0 * freq) / vector_size(docs_index);
 
-    // show
     classifier_show(docs_index, docs_cosine, forward, class, probability);
 
-    // destroy
     vector_destroy(docs_index, do_nothing);
     vector_destroy(docs_cosine, do_nothing);
     vector_destroy(words_input, free);
@@ -390,6 +396,7 @@ void doc_report(Index forward) {
     Vector docs_freq_asc = vector_new();
     Vector docs_freq_desc = vector_new();
 
+    // para cada arquivo, faz a soma total de suas frequencias
     Index_Map im;
     void *_;
     index_for(_, im, forward) {
@@ -408,8 +415,8 @@ void doc_report(Index forward) {
         if (__i > 9) {
             break;
         }
-        vector_push(docs_index_asc, new_int(*(int *)pair_first(p)));
-        vector_push(docs_freq_asc, new_int(*(int *)pair_second(p)));
+        vector_push(docs_index_asc, new_int(*(int *)pair_first(p)));  // index
+        vector_push(docs_freq_asc, new_int(*(int *)pair_second(p)));  // freq
     }
 
     vector_sort(values, decrescent_int_sort);
@@ -417,8 +424,8 @@ void doc_report(Index forward) {
         if (__i > 9) {
             break;
         }
-        vector_push(docs_index_desc, new_int(*(int *)pair_first(p)));
-        vector_push(docs_freq_desc, new_int(*(int *)pair_second(p)));
+        vector_push(docs_index_desc, new_int(*(int *)pair_first(p)));  // index
+        vector_push(docs_freq_desc, new_int(*(int *)pair_second(p)));  // freq
     }
 
     printf("-> asc order\n");
@@ -497,6 +504,8 @@ void word_report(Index inverted, Index forward) {
     printf("info: '%s' appeared in %d/%d docs.\n\n", word, map_size(im),
            index_size(forward));
 
+    // para a palavra buscada 'word' copia os indices de documentos e suas
+    // respectivas frequencias para o vetor 'values'
     Index_Item ii;
     char *doc_index;
     map_for(doc_index, ii, im) {
@@ -507,12 +516,14 @@ void word_report(Index inverted, Index forward) {
 
     vector_sort(values, decrescent_int_sort);
 
+    // separa os dados de 'values' em 2 vetores
     Pair p;
     vector_for(p, values) {
         vector_push(docs_index, new_int(*(int *)pair_first(p)));
         vector_push(word_freq, new_int(*(int *)pair_second(p)));
     }
 
+    // map de classes e freq ordenado de forma decrescente
     get_class(forward, docs_index, vector_classes);
     map_classes = classname_map_frequency(vector_classes, word_freq);
 
