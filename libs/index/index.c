@@ -269,26 +269,3 @@ int alphabetic_sort(const void *d1, const void *d2) {
     const Pair *p2 = d2;
     return strcmp((char *)pair_first(*p1), (char *)pair_first(*p2));
 }
-
-// mathematic
-
-double magnetude(Index_Vector v) {
-    double sum = 0, *a;
-    vector_for(a, v) {
-        sum += pow(*a, 2);
-    }
-    return sqrt(sum);
-}
-
-double escalar(Index_Vector v1, Index_Vector v2) {
-    double *a, *b, sum = 0;
-    vector_for(a, v1) {
-        b = vector_at(v2, __i);
-        sum += (*a) * (*b);
-    }
-    return sum;
-}
-
-double distance(Index_Vector v1, Index_Vector v2) {
-    return escalar(v1, v2) / (magnetude(v1) * magnetude(v2));
-}

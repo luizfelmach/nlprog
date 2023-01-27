@@ -11,17 +11,17 @@ double maths_dot(Vector v1, Vector v2) {
         exit(1);
     }
     double dot = 0;
-    int *a, *b;
+    double *a, *b;
     vector_for(a, v1) {
         b = vector_at(v2, __i);
-        dot += *a * *b;
+        dot += (*a) * (*b);
     };
     return dot;
 }
 
 double maths_norm(Vector v) {
     double norm = 0;
-    int *c;
+    double *c;
     vector_for(c, v) {
         norm += pow(*c, 2);
     }

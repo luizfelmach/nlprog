@@ -38,7 +38,7 @@ int decrescent_frequency_sort(const void *d1, const void *d2) {
     return 0;
 }
 
-Map classname_map_frequency(Vector vector_classes) {
+Map classname_map_frequency(Vector vector_classes, Vector vector_freq) {
     if (vector_size(vector_classes) < 1) {
         return NULL;
     }
@@ -55,7 +55,12 @@ Map classname_map_frequency(Vector vector_classes) {
             map_insert(classes_map, new_string(class), new_int(0));
             freq = map_get(classes_map, class);
         }
-        *freq += 1;
+
+        if(!vector_freq){
+            *freq += 1;
+        }else{
+            *freq += *(int*)vector_at(vector_freq,__i);
+        }
     }
 
     map_sort(classes_map, decrescent_frequency_sort);
@@ -64,7 +69,7 @@ Map classname_map_frequency(Vector vector_classes) {
 
 const char *classname_map_first(Vector vector_classes, int* freq) {
     // get the first element from
-    Map classes_map = classname_map_frequency(vector_classes);
+    Map classes_map = classname_map_frequency(vector_classes, NULL);
     if (!classes_map) {
         return NULL;
     }

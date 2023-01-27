@@ -58,6 +58,7 @@ void setup(int argc, char *argv[], Vector *path_docs, Vector *class_docs) {
     }
     *path_docs = vector_new();
     *class_docs = vector_new();
+    // carrega os nomes dos arquivos e suas respectivas classes
     while (1) {
         char temp1[1024], temp2[1024];
         char *path = malloc(sizeof(char) * 1024);
@@ -73,6 +74,7 @@ void setup(int argc, char *argv[], Vector *path_docs, Vector *class_docs) {
         vector_push(*class_docs, class);
     }
     fclose(file_input);
+    // verifica se todos os arquivos existem
     if (!ensure_exists_paths(*path_docs)) {
         printf("error: missing files in '/train'.\n");
         vector_destroy(*path_docs, free);
