@@ -45,6 +45,7 @@ void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
 void word_report(Index inverted, Index forward);
 
 int main(int argc, char *argv[]) {
+    
     int k;
     Index inverted, forward;
     setup(argc, argv, &inverted, &forward, &k);
