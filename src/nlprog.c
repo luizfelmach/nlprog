@@ -11,7 +11,7 @@
 #include <vector.h>
 
 // nlprog
-
+void menu();
 void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k);
 void destroy_pair_inside_vector(void *data);
 Vector get_words_input(char *label);
@@ -30,8 +30,7 @@ void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
                      int total_docs);
 double classifier_cosine(Index inverted, Index_Map words_index, char *index_doc,
                          Index_Map document);
-void classifier_show(Vector docs_index, Vector similarity, Index forward,
-                     const char *classname, double probability);
+void classifier_show(int size_docs_index, const char *classname);
 void classifier(Index inverted, Index forward, int k);
 
 // doc report
@@ -47,15 +46,30 @@ void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
 void word_report(Index inverted, Index forward);
 
 int main(int argc, char *argv[]) {
-    
+    int choice = 1;
     int k;
     Index inverted, forward;
     setup(argc, argv, &inverted, &forward, &k);
 
-    search_engine(inverted, forward);
-    classifier(inverted, forward, k);
-    doc_report(forward);
-    word_report(inverted, forward);
+    while(choice){
+        menu();
+        scanf("%d%*c", &choice);
+        switch (choice)
+        {
+        case 1:
+            classifier(inverted, forward, k);
+            break;
+        case 2:
+            doc_report(forward);
+            word_report(inverted, forward);
+            break;
+        case 3:
+            search_engine(inverted, forward);
+            break;
+        default:
+            break;
+        }
+    }
 
     index_destroy(inverted);
     index_destroy(forward);
@@ -63,6 +77,13 @@ int main(int argc, char *argv[]) {
 }
 
 // nlprog
+
+void menu(){
+    printf("\n................. MENU ................\n\n");
+    printf("Options:\n");
+    printf("0 - exit\n1 - classifier\n2 - report\n3 -search\n");
+    printf("\n.......................................\n\n");   
+}
 
 void setup(int argc, char *argv[], Index *inverted, Index *forward, int *k) {
     if (argc < 3) {
@@ -169,6 +190,7 @@ void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
 
 void search_engine(Index inverted, Index forward) {
     printf("\n............ SEARCH ENGINE ............\n\n");
+          
 
     Vector words_input = get_words_input("search: ");
     Vector docs_index = vector_new();
@@ -201,29 +223,13 @@ void search_engine(Index inverted, Index forward) {
 
 // classifier
 
-void classifier_show(Vector docs_index, Vector similarity, Index forward,
-                     const char *classname, double probability) {
-    char path[2048], class[2048];
-    int *doc_index;
-
+void classifier_show(int size_docs_index, const char *classname) {
     printf("\nK-Nearest Neighbors - KNN\n\n");
-    if (!vector_size(docs_index)) {
+    if (!size_docs_index) {
         printf("info: no results.\n");
         return;
     } else {
         printf("the class is: %s \t ", classname);
-        printf("probability: %.2lf%%\n\n", probability);
-    }
-    printf("<index> \t <classname> \t <similarity> \t <path>\n");
-    vector_for(doc_index, docs_index) {
-        double *cos = vector_at(similarity, __i);
-        Pair p = index_at(forward, *doc_index);
-        char *path_class = pair_first(p);
-        sscanf(path_class, "%[^,],%s", path, class);
-        printf("# %5d \t ", *doc_index);
-        printf("%10s \t ", classname_map_get(class));
-        printf("%5.2lf%% \t ", (*cos) * 100);
-        printf("%s \n", path);
     }
 }
 
@@ -305,56 +311,53 @@ void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
 }
 
 void classifier(Index inverted, Index forward, int k) {
-    printf("\n.............. CLASSIFIER ..............\n\n");
+    printf("\n.............. CLASSIFIER .............\n\n");
+         
     if (k > index_size(forward)) {
         printf("warn: k is greater than number of docs.\n");
         return;
     }
 
-    Vector vector_classes = vector_new();
     Vector words_input = get_words_input("type the text: ");
-    Vector docs_index = vector_new();
-    Vector docs_cosine = vector_new();
-    Vector values = vector_new();
     Index_Map words_index = map_new();
+    Vector vector_classes = vector_new();
+    Vector docs_index = vector_new();
+    Vector values = vector_new();
     char index_doc[2048];
     void *_;
 
     // 'word_index' é o indice de palavras produzido a partir do input do
-    // usuario cria 'word_index' e seta sua frequcia e tf_idf
+    // usuario; 
+    // cria um indice de palavras 'word_index' e seta sua frequcia e tf_idf
     get_words_index(inverted, words_index, words_input, index_size(forward));
 
-    // calcula o cosseno
+    // calcula o cosseno de todos os documentos com o texto digitado
     Pair p;
     Index_Map im;
     index_for(_, im, forward) {
         sprintf(index_doc, "%d", __i);
         double cos = classifier_cosine(inverted, words_index, index_doc, im);
-        p = pair_new(new_int(__i), new_double(cos));  // indice e cosseno
-        vector_push(values, p);
+        if(cos){ // para valores de cossenos diferentes de zero
+            p = pair_new(new_int(__i), new_double(cos));  // indice e cosseno
+            vector_push(values, p);
+        }
     }
 
-    // navega entre as k primeiras posicoes de 'values' e o separa em 2
+    // navega entre as k primeiras posicoes de 'values' e captura os indices (primeiro elemento de um pair)
     vector_sort(values, decrescent_double_sort);
     vector_for(p, values) {
         if (__i >= k) {
             break;
         }
         vector_push(docs_index, pair_first(p));    // index
-        vector_push(docs_cosine, pair_second(p));  // coss
     }
 
-    int freq;
     get_class(forward, docs_index, vector_classes);
-    const char *class = classname_map_first(vector_classes, &freq);  // +freq
+    const char *class = classname_most_frequently(vector_classes);  // +frequente
 
-    // probabilidade de acerto
-    double probability = (100.0 * freq) / vector_size(docs_index);
-
-    classifier_show(docs_index, docs_cosine, forward, class, probability);
+    classifier_show(vector_size(docs_index), class);
 
     vector_destroy(docs_index, do_nothing);
-    vector_destroy(docs_cosine, do_nothing);
     vector_destroy(words_input, free);
     vector_destroy(vector_classes, free);
     vector_destroy(values, destroy_pair_inside_vector);
@@ -389,7 +392,8 @@ void doc_report_show(Vector docs_index, Vector docs_freq, Index forward) {
 }
 
 void doc_report(Index forward) {
-    printf("\n............ DOC REPORT ............\n\n");
+    printf("\n.............. DOC REPORT .............\n\n");
+          
 
     Vector values = vector_new();
     Vector docs_index_asc = vector_new();
@@ -483,7 +487,7 @@ void word_report_show(Vector docs_index, Vector word_freq, Index inverted,
 }
 
 void word_report(Index inverted, Index forward) {
-    printf("\n............ WORD REPORT ............\n\n");
+    printf("\n.............. WORD REPORT ............\n\n");
 
     char word[2048];
     printf("query: ");
@@ -520,13 +524,13 @@ void word_report(Index inverted, Index forward) {
     // separa os dados de 'values' em 2 vetores
     Pair p;
     vector_for(p, values) {
-        vector_push(docs_index, new_int(*(int *)pair_first(p)));
-        vector_push(word_freq, new_int(*(int *)pair_second(p)));
+        vector_push(docs_index, new_int(*(int *)pair_first(p))); // index
+        vector_push(word_freq, new_int(*(int *)pair_second(p))); // freq
     }
 
     // map de classes e freq ordenado de forma decrescente
     get_class(forward, docs_index, vector_classes);
-    map_classes = classname_map_frequency(vector_classes, word_freq);
+    map_classes = classname_map_generate_map_of_frequency(vector_classes, word_freq);
 
     printf("-> most frequently\n");
     word_report_show(docs_index, word_freq, inverted, forward, word);
