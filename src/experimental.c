@@ -13,7 +13,7 @@
 void setup(int argc, char **argv, Index *inverted, Index *forward, int *k);
 int main(int argc, char **argv) {
     Index inverted, forward;
-    int *k = NULL;
+    int k;
     setup(argc, argv, &inverted, &forward, &k);
 
 

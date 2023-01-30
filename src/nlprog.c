@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 void menu(){
     printf("\n................. MENU ................\n\n");
     printf("Options:\n");
-    printf("0 - exit\n1 - classifier\n2 - words report\n3 - documents report\n4 -search\n");
+    printf("0 - exit\n1 - classifier\n2 - words report\n3 - documents report\n4 - search\n");
     printf("\n.......................................\n\n");   
 }
 
@@ -256,19 +256,20 @@ void classifier(Index inverted, Index forward, int k) {
             index_calculate_tfidf(index_item_freq(ii), len_docs, total_docs);
         index_set_tfidf(ii, tf_idf);
     }
-
+    
     // classifica
-    const char * class = index_classifier(inverted, forward,typed_news,k);
+    const char * class = index_classifier(inverted, forward, typed_news, k);
     
     // imprime o resultado
     printf("\nK-Nearest Neighbors - KNN\n\n");
+    
     if (!class) {
         printf("info: no results.\n");
-        return;
     } else {
         printf("the class is: %s \t ", class);
     }
-
+    
+    
     vector_destroy(words_input, free);
     map_destroy(typed_news, free, free);
 }

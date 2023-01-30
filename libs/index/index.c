@@ -245,7 +245,6 @@ const char * index_classifier(Index inverted, Index forward, Index_Map notice_cl
     Pair document, p;
     
     index_for(_, im, forward) {
-      
         double cos = index_map_cosine_n1_n2(inverted, notice_classified, im);
         if(cos){ // para valores de cossenos diferentes de zero
             p = pair_new(new_int(__i), new_double(cos));  // indice e cosseno
@@ -280,27 +279,27 @@ const char * index_classifier(Index inverted, Index forward, Index_Map notice_cl
 double index_map_cosine_n1_n2(Index inverted, Index_Map notice1, Index_Map notice2) {
     Vector tf_idf_n1 = vector_new();
     Vector tf_idf_n2 = vector_new();
-    Index_Item d1_n1;
-    Index_Item d1_n2;
+    Index_Item di_n1;
+    Index_Item di_n2;
     char *index;
     double tf_idf;
     double cos = 0;
     // para todas as palavras desse documento
-    map_for(index, d1_n2, notice2) {
-        // no indice de palaras, recupera 'word' da posicao 'index'
+    map_for(index, di_n2, notice2) {
+        // no indice de palaras, recupera a palavra da posicao 'index'
         Pair p = index_at(inverted, atoi(index));
         char *word = pair_first(p);
 
-        // procura 'word' em 'words_index'
-        d1_n1 = map_get(notice1, word);
-        if (d1_n1) {
-            tf_idf = index_item_tfidf(d1_n1);
+        // ve se word está contida em 'notice1
+        di_n1 = map_get(notice1, word);
+        if (di_n1) {
+            tf_idf = index_item_tfidf(di_n1);
         } else {
-            // se essa palavra nao existe em 'word_index', seu tf-idf = 0
+            // se essa palavra nao existe em 'notice1', seu tf-idf = 0
             tf_idf = 0;
         }
         vector_push(tf_idf_n1, new_double(tf_idf));
-        tf_idf = index_item_tfidf(d1_n2);
+        tf_idf = index_item_tfidf(di_n2);
         vector_push(tf_idf_n2, new_double(tf_idf));
     }
 
