@@ -67,4 +67,7 @@ int crescent_int_sort(const void *d1, const void *d2);
 int decrescent_item_freq_sort(const void *d1, const void *d2);
 int alphabetic_sort(const void *d1, const void *d2);
 
+const char * index_classifier(Index inverted, Index forward, Index_Map notice_classified, int k);
+double index_map_cosine_n1_n2(Index inverted, Index_Map notice1, Index_Map notice2);
+
 #endif  // INDEX_H

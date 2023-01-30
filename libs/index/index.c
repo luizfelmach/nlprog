@@ -2,10 +2,12 @@
 #include <index.h>
 #include <map.h>
 #include <math.h>
+#include <maths.h>
 #include <pair.h>
 #include <primitive.h>
 #include <stdio.h>
 #include <string.h>
+#include <classname_map.h>
 
 struct _index_item {
     int freq;
@@ -230,6 +232,98 @@ void index_destroy(Index index) {
                     map_destroy((Map)data, free, free);
                 }));
     free(index);
+}
+
+// classifier
+
+const char * index_classifier(Index inverted, Index forward, Index_Map notice_classified, int k){
+    void *_;
+    Vector values = vector_new();
+    Vector vector_classes = vector_new();
+    Index_Map im;
+    int *doc_index;
+    Pair document, p;
+    
+    index_for(_, im, forward) {
+      
+        double cos = index_map_cosine_n1_n2(inverted, notice_classified, im);
+        if(cos){ // para valores de cossenos diferentes de zero
+            p = pair_new(new_int(__i), new_double(cos));  // indice e cosseno
+            vector_push(values, p);
+        }
+    }
+
+    vector_sort(values, decrescent_double_sort);
+    vector_for(p, values) {
+        if (__i >= k) {
+            break;
+        }
+        doc_index = pair_first(p);    // index
+        document = index_at(forward, *doc_index);
+        char *path_class = pair_first(document);
+        char class[2048];
+        sscanf(path_class, "%*[^,],%s", class);
+        vector_push(vector_classes, new_string(class));
+    }
+
+    const char *class = classname_most_frequently(vector_classes);  // +frequente
+
+  
+
+    vector_destroy(vector_classes, free);
+    vector_destroy(values, call(void, (void *data),{
+        pair_destroy(data, free, free);
+    }));
+    return class;
+}
+
+double index_map_cosine_n1_n2(Index inverted, Index_Map notice1, Index_Map notice2) {
+    Vector tf_idf_n1 = vector_new();
+    Vector tf_idf_n2 = vector_new();
+    Index_Item d1_n1;
+    Index_Item d1_n2;
+    char *index;
+    double tf_idf;
+    double cos = 0;
+    // para todas as palavras desse documento
+    map_for(index, d1_n2, notice2) {
+        // no indice de palaras, recupera 'word' da posicao 'index'
+        Pair p = index_at(inverted, atoi(index));
+        char *word = pair_first(p);
+
+        // procura 'word' em 'words_index'
+        d1_n1 = map_get(notice1, word);
+        if (d1_n1) {
+            tf_idf = index_item_tfidf(d1_n1);
+        } else {
+            // se essa palavra nao existe em 'word_index', seu tf-idf = 0
+            tf_idf = 0;
+        }
+        vector_push(tf_idf_n1, new_double(tf_idf));
+        tf_idf = index_item_tfidf(d1_n2);
+        vector_push(tf_idf_n2, new_double(tf_idf));
+    }
+
+    // se nao existe nenhuma palavra em comum
+    double *i, count = 0;
+    vector_for(i, tf_idf_n1) {
+        if (*i != 0.0) {
+            count++;
+        }
+    }
+
+    if (!count) {
+        vector_destroy(tf_idf_n1, free);
+        vector_destroy(tf_idf_n2, free);
+        return 0;
+    }
+
+    // calcula o cosseno entre os dois vetores
+    cos = maths_cosv1v2(tf_idf_n1, tf_idf_n2);
+
+    vector_destroy(tf_idf_n1, free);
+    vector_destroy(tf_idf_n2, free);
+    return cos;
 }
 
 // sort

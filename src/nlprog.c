@@ -26,11 +26,6 @@ void search_sum_tfidf(Index inverted, Index forward, Vector words_input,
 void search_engine(Index inverted, Index forward);
 
 // classifier
-void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
-                     int total_docs);
-double classifier_cosine(Index inverted, Index_Map words_index, char *index_doc,
-                         Index_Map document);
-void classifier_show(int size_docs_index, const char *classname);
 void classifier(Index inverted, Index forward, int k);
 
 // doc report
@@ -50,7 +45,7 @@ int main(int argc, char *argv[]) {
     int k;
     Index inverted, forward;
     setup(argc, argv, &inverted, &forward, &k);
-
+   
     while(choice){
         menu();
         scanf("%d%*c", &choice);
@@ -60,10 +55,12 @@ int main(int argc, char *argv[]) {
             classifier(inverted, forward, k);
             break;
         case 2:
-            doc_report(forward);
             word_report(inverted, forward);
             break;
         case 3:
+            doc_report(forward);
+            break;
+        case 4:
             search_engine(inverted, forward);
             break;
         default:
@@ -81,7 +78,7 @@ int main(int argc, char *argv[]) {
 void menu(){
     printf("\n................. MENU ................\n\n");
     printf("Options:\n");
-    printf("0 - exit\n1 - classifier\n2 - report\n3 -search\n");
+    printf("0 - exit\n1 - classifier\n2 - words report\n3 - documents report\n4 -search\n");
     printf("\n.......................................\n\n");   
 }
 
@@ -223,81 +220,32 @@ void search_engine(Index inverted, Index forward) {
 
 // classifier
 
-void classifier_show(int size_docs_index, const char *classname) {
-    printf("\nK-Nearest Neighbors - KNN\n\n");
-    if (!size_docs_index) {
-        printf("info: no results.\n");
+
+void classifier(Index inverted, Index forward, int k) {
+    printf("\n.............. CLASSIFIER .............\n\n");
+         
+    if (k > index_size(forward)) {
+        printf("warn: k is greater than number of docs.\n");
         return;
-    } else {
-        printf("the class is: %s \t ", classname);
     }
-}
-
-double classifier_cosine(Index inverted, Index_Map words_index, char *index_doc,
-                         Index_Map document) {
-    Vector tf_idf_text = vector_new();
-    Vector tf_idf_notice = vector_new();
-    Index_Item di_words_index;
-    Index_Item di_document;
-    char *index;
-    double tf_idf;
-    double cos = 0;
-    // para todas as palavras desse documento
-    map_for(index, di_document, document) {
-        // no indice de palaras, recupera 'word' da posicao 'index'
-        Pair p = index_at(inverted, atoi(index));
-        char *word = pair_first(p);
-
-        // procura 'word' em 'words_index'
-        di_words_index = map_get(words_index, word);
-        if (di_words_index) {
-            tf_idf = index_item_tfidf(di_words_index);
-        } else {
-            // se essa palavra nao existe em 'word_index', seu tf-idf = 0
-            tf_idf = 0;
-        }
-        vector_push(tf_idf_text, new_double(tf_idf));
-        tf_idf = index_item_tfidf(di_document);
-        vector_push(tf_idf_notice, new_double(tf_idf));
-    }
-
-    // se nao existe nenhuma palavra em comum
-    double *i, count = 0;
-    vector_for(i, tf_idf_text) {
-        if (*i != 0.0) {
-            count++;
-        }
-    }
-
-    if (!count) {
-        vector_destroy(tf_idf_text, free);
-        vector_destroy(tf_idf_notice, free);
-        return 0;
-    }
-
-    // calcula o cosseno entre os dois vetores
-    cos = maths_cosv1v2(tf_idf_text, tf_idf_notice);
-
-    vector_destroy(tf_idf_text, free);
-    vector_destroy(tf_idf_notice, free);
-    return cos;
-}
-
-void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
-                     int total_docs) {
+    Vector words_input = get_words_input("type the text: ");
+    Index_Map typed_news = map_new();
     Index_Map im;
     Index_Item ii;
     int len_docs;
     double tf_idf;
     char *word_input;
+    int total_docs = index_size(forward);
 
+    // transforma as palavras digitadas pelo usuario em uma especie de noticia
+    
     // seta o frequencia
     vector_for(word_input, words_input) {
-        index_map_add(words_index, word_input, 1);
+        index_map_add(typed_news, word_input, 1);
     }
 
     // seta  o tf-idf
-    map_for(word_input, ii, words_index) {
+    map_for(word_input, ii, typed_news) {
         im = index_get(inverted, word_input);
         if (im) {
             len_docs = map_size(im);
@@ -308,60 +256,21 @@ void get_words_index(Index inverted, Index_Map words_index, Vector words_input,
             index_calculate_tfidf(index_item_freq(ii), len_docs, total_docs);
         index_set_tfidf(ii, tf_idf);
     }
-}
 
-void classifier(Index inverted, Index forward, int k) {
-    printf("\n.............. CLASSIFIER .............\n\n");
-         
-    if (k > index_size(forward)) {
-        printf("warn: k is greater than number of docs.\n");
+    // classifica
+    const char * class = index_classifier(inverted, forward,typed_news,k);
+    
+    // imprime o resultado
+    printf("\nK-Nearest Neighbors - KNN\n\n");
+    if (!class) {
+        printf("info: no results.\n");
         return;
+    } else {
+        printf("the class is: %s \t ", class);
     }
 
-    Vector words_input = get_words_input("type the text: ");
-    Index_Map words_index = map_new();
-    Vector vector_classes = vector_new();
-    Vector docs_index = vector_new();
-    Vector values = vector_new();
-    char index_doc[2048];
-    void *_;
-
-    // 'word_index' é o indice de palavras produzido a partir do input do
-    // usuario; 
-    // cria um indice de palavras 'word_index' e seta sua frequcia e tf_idf
-    get_words_index(inverted, words_index, words_input, index_size(forward));
-
-    // calcula o cosseno de todos os documentos com o texto digitado
-    Pair p;
-    Index_Map im;
-    index_for(_, im, forward) {
-        sprintf(index_doc, "%d", __i);
-        double cos = classifier_cosine(inverted, words_index, index_doc, im);
-        if(cos){ // para valores de cossenos diferentes de zero
-            p = pair_new(new_int(__i), new_double(cos));  // indice e cosseno
-            vector_push(values, p);
-        }
-    }
-
-    // navega entre as k primeiras posicoes de 'values' e captura os indices (primeiro elemento de um pair)
-    vector_sort(values, decrescent_double_sort);
-    vector_for(p, values) {
-        if (__i >= k) {
-            break;
-        }
-        vector_push(docs_index, pair_first(p));    // index
-    }
-
-    get_class(forward, docs_index, vector_classes);
-    const char *class = classname_most_frequently(vector_classes);  // +frequente
-
-    classifier_show(vector_size(docs_index), class);
-
-    vector_destroy(docs_index, do_nothing);
     vector_destroy(words_input, free);
-    vector_destroy(vector_classes, free);
-    vector_destroy(values, destroy_pair_inside_vector);
-    map_destroy(words_index, free, free);
+    map_destroy(typed_news, free, free);
 }
 
 // doc report
