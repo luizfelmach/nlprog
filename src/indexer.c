@@ -48,7 +48,7 @@ void setup(int argc, char *argv[], Vector *path_docs, Vector *class_docs) {
         exit(1);
     }
     char filename_input[2048];
-    sprintf(filename_input, "%s/train.txt", argv[1]);
+    sprintf(filename_input, "%s/train.txt", argv[1]); // mudar
     printf("info: current folder is '%s'.\n", argv[1]);
     printf("info: path to file input is '%s'.\n", filename_input);
     FILE *file_input = fopen(filename_input, "r");

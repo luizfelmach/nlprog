@@ -198,6 +198,10 @@ Index_Item index_get_get(Index index, char *key1, char *key2) {
     return map_get(im, key2);
 }
 
+int index_get_index(Index index, data_cmp cmp, char *key){
+    return map_get_index(index->data, cmp, key);
+}
+
 Index index_load(FILE *file) {
     Index index = index_new();
     int i, size;
@@ -254,19 +258,19 @@ const char * index_classifier(Index inverted, Index forward, Index_Map notice_cl
 
     vector_sort(values, decrescent_double_sort);
     vector_for(p, values) {
+    
         if (__i >= k) {
             break;
         }
         doc_index = pair_first(p);    // index
         document = index_at(forward, *doc_index);
         char *path_class = pair_first(document);
-        char class[2048];
-        sscanf(path_class, "%*[^,],%s", class);
-        vector_push(vector_classes, new_string(class));
+        char classname[2048];
+        sscanf(path_class, "%*[^,],%s", classname);
+        vector_push(vector_classes, new_string(classname));
     }
 
     const char *class = classname_most_frequently(vector_classes);  // +frequente
-
   
 
     vector_destroy(vector_classes, free);
@@ -281,17 +285,13 @@ double index_map_cosine_n1_n2(Index inverted, Index_Map notice1, Index_Map notic
     Vector tf_idf_n2 = vector_new();
     Index_Item di_n1;
     Index_Item di_n2;
-    char *index;
+    char *word_index;
     double tf_idf;
     double cos = 0;
     // para todas as palavras desse documento
-    map_for(index, di_n2, notice2) {
-        // no indice de palaras, recupera a palavra da posicao 'index'
-        Pair p = index_at(inverted, atoi(index));
-        char *word = pair_first(p);
-
-        // ve se word está contida em 'notice1
-        di_n1 = map_get(notice1, word);
+    map_for(word_index, di_n2, notice2) {
+        // ve se se a palavra em notice2 está contida em notice 1
+        di_n1 = map_get(notice1, word_index);
         if (di_n1) {
             tf_idf = index_item_tfidf(di_n1);
         } else {
@@ -361,4 +361,9 @@ int alphabetic_sort(const void *d1, const void *d2) {
     const Pair *p1 = d1;
     const Pair *p2 = d2;
     return strcmp((char *)pair_first(*p1), (char *)pair_first(*p2));
+}
+
+int word_in_index(const void *d1, const void *d2){
+    const char *key = (char *)d1;
+    return strcmp(key, (char *)pair_first((Pair)d2));
 }

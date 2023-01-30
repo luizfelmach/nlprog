@@ -54,6 +54,7 @@ Index_Map index_get(Index index, char *key);
 Pair index_get_at(Index index, char *key, int pos);
 Index_Item index_at_get(Index index, int pos, char *key);
 Index_Item index_get_get(Index index, char *key1, char *key2);
+int index_get_index(Index index, data_cmp cmp, char *key);
 
 Index index_load(FILE *file);
 void index_write(Index index, FILE *file);
@@ -66,6 +67,7 @@ int decrescent_int_sort(const void *d1, const void *d2);
 int crescent_int_sort(const void *d1, const void *d2);
 int decrescent_item_freq_sort(const void *d1, const void *d2);
 int alphabetic_sort(const void *d1, const void *d2);
+int word_in_index(const void *d1, const void *d2);
 
 const char * index_classifier(Index inverted, Index forward, Index_Map notice_classified, int k);
 double index_map_cosine_n1_n2(Index inverted, Index_Map notice1, Index_Map notice2);

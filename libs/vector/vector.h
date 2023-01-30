@@ -19,6 +19,7 @@ void vector_push(Vector vector, void *data);
 void vector_foreach(Vector vector, data_fn fn, void *ctx);
 void vector_sort(Vector vector, data_cmp cmp);
 int vector_size(Vector vector);
+int vector_get_index(Vector vector, data_cmp cmp, void *value);
 void *vector_search(Vector vector, data_cmp cmp, void *value);
 void vector_destroy(Vector vector, data_destroy destroy);
 

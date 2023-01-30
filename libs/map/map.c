@@ -89,6 +89,10 @@ Pair map_at(Map map, int pos) {
     return (Pair)vector_at(map->data_vector, pos);
 }
 
+int map_get_index(Map map, data_cmp cmp, char *key){
+    return vector_get_index(map->data_vector, cmp, key);
+}
+
 void map_destroy(Map map, data_destroy destroy_key,
                  data_destroy destroy_value) {
     void destroy_all(void *data) {

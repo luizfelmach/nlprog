@@ -47,6 +47,16 @@ void *vector_search(Vector vector, data_cmp cmp, void *value) {
     return NULL;
 }
 
+int vector_get_index(Vector vector, data_cmp cmp, void *value) {
+    int i;
+    for (i = 0; i < vector->last; i++) {
+        if (cmp(value, vector->data[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void vector_sort(Vector vector, data_cmp cmp) {
     qsort(vector->data, vector->last, sizeof(void *), cmp);
 }

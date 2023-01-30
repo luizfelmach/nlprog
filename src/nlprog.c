@@ -220,7 +220,6 @@ void search_engine(Index inverted, Index forward) {
 
 // classifier
 
-
 void classifier(Index inverted, Index forward, int k) {
     printf("\n.............. CLASSIFIER .............\n\n");
          
@@ -236,19 +235,26 @@ void classifier(Index inverted, Index forward, int k) {
     double tf_idf;
     char *word_input;
     int total_docs = index_size(forward);
+    char *doc_index;
 
     // transforma as palavras digitadas pelo usuario em uma especie de noticia
     
     // seta o frequencia
     vector_for(word_input, words_input) {
-        index_map_add(typed_news, word_input, 1);
+        
+        int index = index_get_index(inverted, word_in_index, word_input);
+        if(index >=0){
+            char index_str[2048];
+            sprintf(index_str, "%d", index);
+            index_map_add(typed_news, index_str , 1);
+        }
     }
 
     // seta  o tf-idf
-    map_for(word_input, ii, typed_news) {
-        im = index_get(inverted, word_input);
-        if (im) {
-            len_docs = map_size(im);
+    map_for(doc_index, ii, typed_news) {
+        Pair p = index_at(inverted, atoi(doc_index));
+        if (p) {
+            len_docs = map_size(pair_second(p));
         } else {
             len_docs = 0;
         }
@@ -256,7 +262,7 @@ void classifier(Index inverted, Index forward, int k) {
             index_calculate_tfidf(index_item_freq(ii), len_docs, total_docs);
         index_set_tfidf(ii, tf_idf);
     }
-    
+
     // classifica
     const char * class = index_classifier(inverted, forward, typed_news, k);
     

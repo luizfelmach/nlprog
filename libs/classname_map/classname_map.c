@@ -93,3 +93,4 @@ const char *classname_most_frequently(Vector vector_classes) {
     map_destroy(classes_map, free, free);
     return classname_map_get(classname);
 }
+
