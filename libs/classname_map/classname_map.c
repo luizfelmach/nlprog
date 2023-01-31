@@ -27,16 +27,6 @@ const char *classname_map_get(char *key) {
     return classname_map[i][1];
 }
 
-const char *classname_map_get_siggle(char *key) {
-    int i = 0;
-    for (i = 0; i < 21; i++) {
-        if (!strcmp(classname_map[i][1], key)) {
-            return classname_map[i][1];
-        }
-    }
-    return classname_map[i][0];
-}
-
 int decrescent_frequency_sort(const void *d1, const void *d2) {
     int *f1 = pair_second(*(const Pair *)d1);
     int *f2 = pair_second(*(const Pair *)d2);
@@ -87,6 +77,7 @@ const char *classname_most_frequently(Vector vector_classes) {
 
     // calcula a frequencia com que cada classe aparece
     vector_for(class, vector_classes) {
+      
         int *freq = map_get(classes_map, class);
         if (!freq) {
             map_insert(classes_map, new_string(class), new_int(0));

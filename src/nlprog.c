@@ -241,20 +241,14 @@ void classifier(Index inverted, Index forward, int k) {
     
     // seta o frequencia
     vector_for(word_input, words_input) {
-        
-        int index = index_get_index(inverted, word_in_index, word_input);
-        if(index >=0){
-            char index_str[2048];
-            sprintf(index_str, "%d", index);
-            index_map_add(typed_news, index_str , 1);
-        }
+        index_map_add(typed_news, word_input, 1);
     }
 
     // seta  o tf-idf
-    map_for(doc_index, ii, typed_news) {
-        Pair p = index_at(inverted, atoi(doc_index));
-        if (p) {
-            len_docs = map_size(pair_second(p));
+    map_for(word_input, ii, typed_news) {
+        im = index_get(inverted, word_input);
+        if (im) {
+            len_docs = map_size(im);
         } else {
             len_docs = 0;
         }

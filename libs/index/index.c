@@ -247,8 +247,8 @@ const char * index_classifier(Index inverted, Index forward, Index_Map notice_cl
     Index_Map im;
     int *doc_index;
     Pair document, p;
-    
     index_for(_, im, forward) {
+
         double cos = index_map_cosine_n1_n2(inverted, notice_classified, im);
         if(cos){ // para valores de cossenos diferentes de zero
             p = pair_new(new_int(__i), new_double(cos));  // indice e cosseno
@@ -257,21 +257,21 @@ const char * index_classifier(Index inverted, Index forward, Index_Map notice_cl
     }
 
     vector_sort(values, decrescent_double_sort);
-    vector_for(p, values) {
     
+    vector_for(p, values) {
         if (__i >= k) {
             break;
         }
         doc_index = pair_first(p);    // index
         document = index_at(forward, *doc_index);
         char *path_class = pair_first(document);
-        char classname[2048];
-        sscanf(path_class, "%*[^,],%s", classname);
-        vector_push(vector_classes, new_string(classname));
+        char class[2048];
+        sscanf(path_class, "%*[^,],%s", class);
+        vector_push(vector_classes, new_string(class));
     }
 
     const char *class = classname_most_frequently(vector_classes);  // +frequente
-  
+
 
     vector_destroy(vector_classes, free);
     vector_destroy(values, call(void, (void *data),{
@@ -283,23 +283,27 @@ const char * index_classifier(Index inverted, Index forward, Index_Map notice_cl
 double index_map_cosine_n1_n2(Index inverted, Index_Map notice1, Index_Map notice2) {
     Vector tf_idf_n1 = vector_new();
     Vector tf_idf_n2 = vector_new();
-    Index_Item di_n1;
-    Index_Item di_n2;
-    char *word_index;
+    Index_Item d1_n1;
+    Index_Item d1_n2;
+    char *index;
     double tf_idf;
     double cos = 0;
     // para todas as palavras desse documento
-    map_for(word_index, di_n2, notice2) {
-        // ve se se a palavra em notice2 está contida em notice 1
-        di_n1 = map_get(notice1, word_index);
-        if (di_n1) {
-            tf_idf = index_item_tfidf(di_n1);
+    map_for(index, d1_n2, notice2) {
+        // no indice de palaras, recupera 'word' da posicao 'index'
+        Pair p = index_at(inverted, atoi(index));
+        char *word = pair_first(p);
+
+        // procura 'word' em 'words_index'
+        d1_n1 = map_get(notice1, word);
+        if (d1_n1) {
+            tf_idf = index_item_tfidf(d1_n1);
         } else {
-            // se essa palavra nao existe em 'notice1', seu tf-idf = 0
+            // se essa palavra nao existe em 'word_index', seu tf-idf = 0
             tf_idf = 0;
         }
         vector_push(tf_idf_n1, new_double(tf_idf));
-        tf_idf = index_item_tfidf(di_n2);
+        tf_idf = index_item_tfidf(d1_n2);
         vector_push(tf_idf_n2, new_double(tf_idf));
     }
 
