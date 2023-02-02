@@ -13,13 +13,14 @@
 // experimental
 void setup(int argc, char **argv, Index *inverted, Index *forward, int *k,
            Vector *path_docs, Vector *class_docs);
-Vector read_document(char *path);
 int ensure_exists_paths(Vector path_docs);
 int str_cmp(const void *d1, const void *d2);
+void destroy_map_inside_vector(void *data);
 
 // classificador
-Vector classifier_all_docs(Index inverted, Index forward, Vector paths, int k);
-Index_Map calculate_freq_and_tfidf(Index inverted, Index forward, Vector text);
+Vector read_documents(Index forward, Index inverted, Vector paths);
+Index_Map doc_load(Index inverted, Index forward, char *dir);
+Vector classifier_all_docs(Index inverted, Index forward, Vector docs, int k);
 
 // matriz de confusao
 void matrix_of_confusion(Vector predicted_doc_classes,
@@ -36,8 +37,9 @@ int main(int argc, char **argv) {
 
     setup(argc, argv, &inverted, &forward, &k, &path_docs, &class_docs);
 
-    estimated_class = classifier_all_docs(inverted, forward, path_docs, k);
-
+    Vector docs = read_documents(forward, inverted, path_docs);
+    estimated_class = classifier_all_docs(inverted, forward, docs, k);
+    matrix_of_confusion(class_docs, estimated_class, argv[4]);
     /*
     char *path, *class, *class2;
     vector_for(path, path_docs) {
@@ -47,8 +49,7 @@ int main(int argc, char **argv) {
     }
     */
 
-    matrix_of_confusion(class_docs, estimated_class, argv[4]);
-
+    vector_destroy(docs, destroy_map_inside_vector);
     vector_destroy(path_docs, free);
     vector_destroy(class_docs, free);
     vector_destroy(estimated_class, free);
@@ -58,6 +59,14 @@ int main(int argc, char **argv) {
 }
 
 // experimental
+
+void destroy_map_inside_vector(void *data) {
+    map_destroy(data, free, free);
+}
+
+int str_cmp(const void *d1, const void *d2) {
+    return strcmp((char *)d1, (char *)d2);
+}
 /*
  * Inicializa o programa e carrega os arquivos necessarios
  */
@@ -151,34 +160,24 @@ int ensure_exists_paths(Vector path_docs) {
     return result;
 }
 
-int str_cmp(const void *d1, const void *d2) {
-    return strcmp((char *)d1, (char *)d2);
-}
-
-Vector read_document(char *path) {
-    FILE *file_doc = fopen(path, "r");
-    char word[2048];
-    if (!file_doc) {
-        printf("Unexpected error when trying to open the file %s\n", path);
-        exit(1);
+Vector read_documents(Index forward, Index inverted, Vector paths) {
+    Vector docs = vector_new();
+    Index_Map new_doc;
+    char *path;
+    printf("info: reading documents\n");
+    vector_for(path, paths) {
+        new_doc = doc_load(inverted, forward, path);
+        if (new_doc) {
+            vector_push(docs, new_doc);
+        }
     }
-
-    Vector doc = vector_new();
-
-    while (!feof(file_doc)) {
-        fscanf(file_doc, "%s", word);
-        vector_push(doc, new_string(word));
-    }
-
-    fclose(file_doc);
-    return doc;
+    return docs;
 }
-
 // classifier
 /*
- * Calcula a frequencia e o tfidf de um novo documento
+ * Le e calcula a frequencia e o tfidf de um novo documento
  */
-Index_Map calculate_freq_and_tfidf(Index inverted, Index forward, Vector text) {
+Index_Map doc_load(Index inverted, Index forward, char *dir) {
     Index_Map new_doc = map_new();
     Index_Map word_content;
     Index_Item item;
@@ -187,10 +186,20 @@ Index_Map calculate_freq_and_tfidf(Index inverted, Index forward, Vector text) {
     int len_docs;
     int total_docs = index_size(forward);
 
-    // seta a frequencia
-    vector_for(word, text) {
-        index_map_add(new_doc, word, 1);
+    // le o documento e seta a frequencia
+    FILE *file_doc = fopen(dir, "r");
+    char word_input[2048];
+    if (!file_doc) {
+        printf("Unexpected error when trying to open the file %s\n", dir);
+        exit(1);
     }
+
+    while (!feof(file_doc)) {
+        fscanf(file_doc, "%s", word_input);
+        index_map_add(new_doc, word_input, 1);
+    }
+
+    fclose(file_doc);
 
     // seta  o tf-idf
     map_for(word, item, new_doc) {
@@ -212,27 +221,25 @@ Index_Map calculate_freq_and_tfidf(Index inverted, Index forward, Vector text) {
 }
 
 /*
- * le o arquivo, salva o texto em um vetor, gera um novo documento, o
- * classifica, salva sua classe estimada em um vetor e destroi o documento o
- * texto
+ * Classifica todos os documetos e exibe uma barra de progresso
  */
-Vector classifier_all_docs(Index inverted, Index forward, Vector paths, int k) {
-    printf("info: sorting all documents\n");
+Vector classifier_all_docs(Index inverted, Index forward, Vector docs, int k) {
+    printf("info: sorting all %d documents\n", vector_size(docs));
     Vector estimated_class = vector_new();
-    Vector text;
-    Index_Map new_doc;
+    Index_Map doc;
     char classname[2028];
     char *path;
-    vector_for(path, paths) {
-        text = read_document(path);
-        new_doc = calculate_freq_and_tfidf(inverted, forward, text);
-        const char *class = index_classifier(inverted, forward, new_doc, k);
+
+    printf("progress:\n");
+    vector_for(doc, docs) {
+        if ((__i % 100) == 0) {
+            printf("%d/%d\n", __i, vector_size(docs));
+        }
+        const char *class = index_classifier(inverted, forward, doc, k);
         sprintf(classname, "%s", class);
         vector_push(estimated_class, new_string(classname));
-
-        map_destroy(new_doc, free, free);
-        vector_destroy(text, free);
     }
+
     return estimated_class;
 }
 
@@ -261,18 +268,23 @@ void matrix_of_confusion(Vector predicted_doc_classes,
     // gera um vetor de classes não repetidas. Cada classe nesse vetor
     // representará um indice na matriz
     vector_for(classname, predicted_doc_classes) {
-        if (!vector_search(vector_classes, str_cmp, classname)) {
-            vector_push(vector_classes, new_string(classname));
+        if (classname) {
+            if (!vector_search(vector_classes, str_cmp, classname)) {
+                vector_push(vector_classes, new_string(classname));
+            }
         }
     }
     vector_for(classname_est, estimated_doc_classes) {
-        if (!vector_search(vector_classes, str_cmp, classname_est)) {
-            vector_push(vector_classes, new_string(classname_est));
+        if (classname_est) {
+            if (!vector_search(vector_classes, str_cmp, classname_est)) {
+                vector_push(vector_classes, new_string(classname_est));
+            }
         }
     }
     size = vector_size(vector_classes);
 
     // configura a matriz
+    printf("info: configuring the matrix\n");
     int matrix[size][size];
     int i, j;
     for (i = 0; i < size; i++) {
@@ -282,11 +294,16 @@ void matrix_of_confusion(Vector predicted_doc_classes,
     }
 
     // preenche a matriz
+    printf("info: inserting elements into the matrix\n");
     vector_for(classname, predicted_doc_classes) {
         classname_est = vector_at(estimated_doc_classes, __i);
-        line = vector_get_index(vector_classes, str_cmp, classname);
-        colun = vector_get_index(vector_classes, str_cmp, classname_est);
-        matrix[line][colun] += 1;
+        if (classname_est && classname) {
+            line = vector_get_index(vector_classes, str_cmp, classname);
+            colun = vector_get_index(vector_classes, str_cmp, classname_est);
+            if (0 <= line && line < size && 0 <= colun && colun < size) {
+                matrix[line][colun] += 1;
+            }
+        }
     }
 
     // percentual de acerto
