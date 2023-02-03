@@ -40,14 +40,6 @@ int main(int argc, char **argv) {
     Vector docs = read_documents(forward, inverted, path_docs);
     estimated_class = classifier_all_docs(inverted, forward, docs, k);
     matrix_of_confusion(class_docs, estimated_class, argv[4]);
-    /*
-    char *path, *class, *class2;
-    vector_for(path, path_docs) {
-        class = vector_at(class_docs, __i);
-        class2 = vector_at(estimated_class, __i);
-        printf("%s %s %s\n", path, class, class2);
-    }
-    */
 
     vector_destroy(docs, destroy_map_inside_vector);
     vector_destroy(path_docs, free);
@@ -167,9 +159,7 @@ Vector read_documents(Index forward, Index inverted, Vector paths) {
     printf("info: reading documents\n");
     vector_for(path, paths) {
         new_doc = doc_load(inverted, forward, path);
-        if (new_doc) {
-            vector_push(docs, new_doc);
-        }
+        vector_push(docs, new_doc);
     }
     return docs;
 }
@@ -194,8 +184,10 @@ Index_Map doc_load(Index inverted, Index forward, char *dir) {
         exit(1);
     }
 
-    while (!feof(file_doc)) {
-        fscanf(file_doc, "%s", word_input);
+    while (1) {
+        if (fscanf(file_doc, "%s", word_input) < 1) {
+            break;
+        }
         index_map_add(new_doc, word_input, 1);
     }
 
@@ -274,13 +266,7 @@ void matrix_of_confusion(Vector predicted_doc_classes,
             }
         }
     }
-    vector_for(classname_est, estimated_doc_classes) {
-        if (classname_est) {
-            if (!vector_search(vector_classes, str_cmp, classname_est)) {
-                vector_push(vector_classes, new_string(classname_est));
-            }
-        }
-    }
+
     size = vector_size(vector_classes);
 
     // configura a matriz
