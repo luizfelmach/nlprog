@@ -244,12 +244,12 @@ const char * index_classifier(Index inverted, Index forward, Index_Map notice_cl
     void *_;
     Vector values = vector_new();
     Vector vector_classes = vector_new();
-    Index_Map im;
+    Index_Map doc_content;
     int *doc_index;
     Pair document, p;
-    index_for(_, im, forward) {
+    index_for(_, doc_content, forward) {
 
-        double cos = index_map_cosine_n1_n2(inverted, notice_classified, im);
+        double cos = index_map_cosine_n1_n2(inverted, notice_classified, doc_content);
         if(cos){ // para valores de cossenos diferentes de zero
             p = pair_new(new_int(__i), new_double(cos));  // indice e cosseno
             vector_push(values, p);
