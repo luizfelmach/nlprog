@@ -47,9 +47,15 @@ void setup(int argc, char *argv[], Vector *path_docs, Vector *class_docs) {
         printf("usage: ./indexer <path> <output>.\n");
         exit(1);
     }
+
     char filename_input[2048];
-    sprintf(filename_input, "%s/train.txt", argv[1]); // mudar
-    printf("info: current folder is '%s'.\n", argv[1]);
+    sprintf(filename_input, "%s", argv[1]);
+
+    char folder [2048];
+    argv[1][strlen(argv[1])- strlen("/train.txt")] = '\0';
+    sprintf(folder, "%s", argv[1]);
+    
+    printf("info: current folder is '%s'.\n", folder);
     printf("info: path to file input is '%s'.\n", filename_input);
     FILE *file_input = fopen(filename_input, "r");
     if (!file_input) {
@@ -68,7 +74,7 @@ void setup(int argc, char *argv[], Vector *path_docs, Vector *class_docs) {
             free(class);
             break;
         }
-        sprintf(path, "%s/%s", argv[1], temp1);
+        sprintf(path, "%s/%s", folder, temp1);
         sprintf(class, "%s", temp2);
         vector_push(*path_docs, path);
         vector_push(*class_docs, class);

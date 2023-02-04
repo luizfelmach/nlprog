@@ -65,7 +65,7 @@ int str_cmp(const void *d1, const void *d2) {
 void setup(int argc, char **argv, Index *inverted, Index *forward, int *k,
            Vector *path_docs, Vector *class_docs) {
     if (argc < 5) {
-        printf("usage: <path bin> <path test> <k> <output>.\n");
+        printf("usage: <path bin> <path test> <number> <output>.\n");
         exit(1);
     }
 
@@ -91,10 +91,19 @@ void setup(int argc, char **argv, Index *inverted, Index *forward, int *k,
     fclose(file_indexes);
 
     // abre o arquivo de test
+
+    
+
     char filename_input[2048];
-    sprintf(filename_input, "%s/test.txt", argv[2]);  // mudar
-    printf("info: current folder is '%s'.\n", argv[2]);
+    sprintf(filename_input, "%s", argv[2]);
+
+    char folder [2048];
+    argv[2][strlen(argv[2])- strlen("/test.txt")] = '\0';
+    sprintf(folder, "%s", argv[2]);
+
+    printf("info: current folder is '%s'.\n", folder);
     printf("info: path to file input is '%s'.\n", filename_input);
+
 
     FILE *file_input = fopen(filename_input, "r");
     if (!file_input) {
@@ -117,7 +126,7 @@ void setup(int argc, char **argv, Index *inverted, Index *forward, int *k,
             free(class);
             break;
         }
-        sprintf(path, "%s/%s", argv[2], temp1);
+        sprintf(path, "%s/%s", folder, temp1);
         sprintf(class, "%s", classname_map_get(temp2));
         vector_push(*path_docs, path);
         vector_push(*class_docs, class);
