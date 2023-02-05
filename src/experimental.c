@@ -91,9 +91,6 @@ void setup(int argc, char **argv, Index *inverted, Index *forward, int *k,
     fclose(file_indexes);
 
     // abre o arquivo de test
-
-    
-
     char filename_input[2048];
     sprintf(filename_input, "%s", argv[2]);
 

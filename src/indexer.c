@@ -104,7 +104,7 @@ void show(Index inverted, Index forward) {
 
 void write(int argc, char *argv[], Index inverted, Index forward) {
     char filename_output[2048];
-    sprintf(filename_output, "%s/%s", argv[1], argv[2]);
+    sprintf(filename_output, "%s", argv[2]);
     FILE *file_output = fopen(filename_output, "wb");
     if (!file_output) {
         printf("error: can not write output in '%s'.", filename_output);
